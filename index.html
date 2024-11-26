@@ -225,7 +225,7 @@
     </style>
 </head>
 <body>
-    <h1>딜러 계산기</h1>
+   <h1>딜러 계산기</h1>
 
     <script>
         const hourlyWage = 500; // 시급 500포인트
@@ -234,7 +234,7 @@
             const now = new Date();
             const seoulOffset = 9 * 60; // 서울은 UTC+9
             const seoulTime = new Date(now.getTime() + seoulOffset * 60 * 1000);
-            const isoString = seoulTime.toISOString().slice(0, 16);
+            const isoString = seoulTime.toISOString().slice(11, 16); // 시간만 가져옴
             document.getElementById(`startTime${calculatorId}`).value = isoString;
             document.getElementById(`endTime${calculatorId}`).value = isoString; // 마감시간도 동일하게 설정
             calculateTotalIncome(calculatorId); // 초기 계산
@@ -242,9 +242,6 @@
 
         function syncStartTime(calculatorId) {
             const startTimeValue = document.getElementById(`startTime${calculatorId}`).value;
-            const endTimeValue = document.getElementById(`endTime${calculatorId}`).value;
-
-            // 딜러의 시작시간을 바꾸면 모든 딜러의 시작시간과 마감시간 동기화
             for (let i = calculatorId; i <= 20; i++) {
                 document.getElementById(`startTime${i}`).value = startTimeValue;
                 document.getElementById(`endTime${i}`).value = startTimeValue; // 마감시간도 동일하게 설정
@@ -254,8 +251,6 @@
 
         function syncEndTime(calculatorId) {
             const endTimeValue = document.getElementById(`endTime${calculatorId}`).value;
-
-            // 딜러의 마감시간을 바꾸면 모든 딜러의 시작시간과 마감시간 동기화
             for (let i = calculatorId + 1; i <= 20; i++) {
                 document.getElementById(`startTime${i}`).value = endTimeValue;
                 document.getElementById(`endTime${i}`).value = endTimeValue; // 마감시간도 동일하게 설정
@@ -264,12 +259,23 @@
         }
 
         function calculateTotalIncome(calculatorId) {
-            const startTime = new Date(document.getElementById(`startTime${calculatorId}`).value);
-            const endTime = new Date(document.getElementById(`endTime${calculatorId}`).value);
-            
+            const startTime = new Date();
+            const endTime = new Date();
+
+            const startTimeValue = document.getElementById(`startTime${calculatorId}`).value;
+            const endTimeValue = document.getElementById(`endTime${calculatorId}`).value;
+
+            startTime.setHours(startTimeValue.split(':')[0], startTimeValue.split(':')[1]);
+            endTime.setHours(endTimeValue.split(':')[0], endTimeValue.split(':')[1]);
+
+            // 마감 시간이 시작 시간보다 앞서면 다음 날로 설정
+            if (endTime < startTime) {
+                endTime.setDate(endTime.getDate() + 1);
+            }
+
             if (startTime && endTime) {
                 const workingMinutes = (endTime - startTime) / (1000 * 60); // 분 단위로 변환
-                
+
                 if (workingMinutes > 0) {
                     const totalIncome = Math.ceil((workingMinutes / 60) * hourlyWage); // 소수점 올림
                     document.getElementById(`result${calculatorId}`).innerText = `Total : ${totalIncome} 포인트`;
@@ -293,10 +299,10 @@
     <div class="calculator">
         <h2>딜러 1 계산기</h2>
         <label for="startTime1">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime1" onchange="syncStartTime(1);"><br>
+        <input type="time" id="startTime1" onchange="syncStartTime(1);"><br>
         
         <label for="endTime1">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime1" onchange="syncEndTime(1); calculateTotalIncome(1);"><br>
+        <input type="time" id="endTime1" onchange="syncEndTime(1); calculateTotalIncome(1);"><br>
         
         <h2 id="result1"></h2>
     </div>
@@ -304,10 +310,10 @@
     <div class="calculator">
         <h2>딜러 2 계산기</h2>
         <label for="startTime2">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime2" onchange="syncStartTime(2);"><br>
+        <input type="time" id="startTime2" onchange="syncStartTime(2);"><br>
         
         <label for="endTime2">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime2" onchange="syncEndTime(2); calculateTotalIncome(2);"><br>
+        <input type="time" id="endTime2" onchange="syncEndTime(2); calculateTotalIncome(2);"><br>
         
         <h2 id="result2"></h2>
     </div>
@@ -315,10 +321,10 @@
     <div class="calculator">
         <h2>딜러 3 계산기</h2>
         <label for="startTime3">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime3" onchange="syncStartTime(3);"><br>
+        <input type="time" id="startTime3" onchange="syncStartTime(3);"><br>
         
         <label for="endTime3">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime3" onchange="syncEndTime(3); calculateTotalIncome(3);"><br>
+        <input type="time" id="endTime3" onchange="syncEndTime(3); calculateTotalIncome(3);"><br>
         
         <h2 id="result3"></h2>
     </div>
@@ -326,10 +332,10 @@
     <div class="calculator">
         <h2>딜러 4 계산기</h2>
         <label for="startTime4">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime4" onchange="syncStartTime(4);"><br>
+        <input type="time" id="startTime4" onchange="syncStartTime(4);"><br>
         
         <label for="endTime4">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime4" onchange="syncEndTime(4); calculateTotalIncome(4);"><br>
+        <input type="time" id="endTime4" onchange="syncEndTime(4); calculateTotalIncome(4);"><br>
         
         <h2 id="result4"></h2>
     </div>
@@ -337,10 +343,10 @@
     <div class="calculator">
         <h2>딜러 5 계산기</h2>
         <label for="startTime5">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime5" onchange="syncStartTime(5);"><br>
+        <input type="time" id="startTime5" onchange="syncStartTime(5);"><br>
         
         <label for="endTime5">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime5" onchange="syncEndTime(5); calculateTotalIncome(5);"><br>
+        <input type="time" id="endTime5" onchange="syncEndTime(5); calculateTotalIncome(5);"><br>
         
         <h2 id="result5"></h2>
     </div>
@@ -348,10 +354,10 @@
     <div class="calculator">
         <h2>딜러 6 계산기</h2>
         <label for="startTime6">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime6" onchange="syncStartTime(6);"><br>
+        <input type="time" id="startTime6" onchange="syncStartTime(6);"><br>
         
         <label for="endTime6">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime6" onchange="syncEndTime(6); calculateTotalIncome(6);"><br>
+        <input type="time" id="endTime6" onchange="syncEndTime(6); calculateTotalIncome(6);"><br>
         
         <h2 id="result6"></h2>
     </div>
@@ -359,10 +365,10 @@
     <div class="calculator">
         <h2>딜러 7 계산기</h2>
         <label for="startTime7">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime7" onchange="syncStartTime(7);"><br>
+        <input type="time" id="startTime7" onchange="syncStartTime(7);"><br>
         
         <label for="endTime7">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime7" onchange="syncEndTime(7); calculateTotalIncome(7);"><br>
+        <input type="time" id="endTime7" onchange="syncEndTime(7); calculateTotalIncome(7);"><br>
         
         <h2 id="result7"></h2>
     </div>
@@ -370,10 +376,10 @@
     <div class="calculator">
         <h2>딜러 8 계산기</h2>
         <label for="startTime8">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime8" onchange="syncStartTime(8);"><br>
+        <input type="time" id="startTime8" onchange="syncStartTime(8);"><br>
         
         <label for="endTime8">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime8" onchange="syncEndTime(8); calculateTotalIncome(8);"><br>
+        <input type="time" id="endTime8" onchange="syncEndTime(8); calculateTotalIncome(8);"><br>
         
         <h2 id="result8"></h2>
     </div>
@@ -381,10 +387,10 @@
     <div class="calculator">
         <h2>딜러 9 계산기</h2>
         <label for="startTime9">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime9" onchange="syncStartTime(9);"><br>
+        <input type="time" id="startTime9" onchange="syncStartTime(9);"><br>
         
         <label for="endTime9">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime9" onchange="syncEndTime(9); calculateTotalIncome(9);"><br>
+        <input type="time" id="endTime9" onchange="syncEndTime(9); calculateTotalIncome(9);"><br>
         
         <h2 id="result9"></h2>
     </div>
@@ -392,10 +398,10 @@
     <div class="calculator">
         <h2>딜러 10 계산기</h2>
         <label for="startTime10">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime10" onchange="syncStartTime(10);"><br>
+        <input type="time" id="startTime10" onchange="syncStartTime(10);"><br>
         
         <label for="endTime10">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime10" onchange="syncEndTime(10); calculateTotalIncome(10);"><br>
+        <input type="time" id="endTime10" onchange="syncEndTime(10); calculateTotalIncome(10);"><br>
         
         <h2 id="result10"></h2>
     </div>
@@ -403,10 +409,10 @@
     <div class="calculator">
         <h2>딜러 11 계산기</h2>
         <label for="startTime11">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime11" onchange="syncStartTime(11);"><br>
+        <input type="time" id="startTime11" onchange="syncStartTime(11);"><br>
         
         <label for="endTime11">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime11" onchange="syncEndTime(11); calculateTotalIncome(11);"><br>
+        <input type="time" id="endTime11" onchange="syncEndTime(11); calculateTotalIncome(11);"><br>
         
         <h2 id="result11"></h2>
     </div>
@@ -414,10 +420,10 @@
     <div class="calculator">
         <h2>딜러 12 계산기</h2>
         <label for="startTime12">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime12" onchange="syncStartTime(12);"><br>
+        <input type="time" id="startTime12" onchange="syncStartTime(12);"><br>
         
         <label for="endTime12">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime12" onchange="syncEndTime(12); calculateTotalIncome(12);"><br>
+        <input type="time" id="endTime12" onchange="syncEndTime(12); calculateTotalIncome(12);"><br>
         
         <h2 id="result12"></h2>
     </div>
@@ -425,10 +431,10 @@
     <div class="calculator">
         <h2>딜러 13 계산기</h2>
         <label for="startTime13">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime13" onchange="syncStartTime(13);"><br>
+        <input type="time" id="startTime13" onchange="syncStartTime(13);"><br>
         
         <label for="endTime13">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime13" onchange="syncEndTime(13); calculateTotalIncome(13);"><br>
+        <input type="time" id="endTime13" onchange="syncEndTime(13); calculateTotalIncome(13);"><br>
         
         <h2 id="result13"></h2>
     </div>
@@ -436,10 +442,10 @@
     <div class="calculator">
         <h2>딜러 14 계산기</h2>
         <label for="startTime14">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime14" onchange="syncStartTime(14);"><br>
+        <input type="time" id="startTime14" onchange="syncStartTime(14);"><br>
         
         <label for="endTime14">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime14" onchange="syncEndTime(14); calculateTotalIncome(14);"><br>
+        <input type="time" id="endTime14" onchange="syncEndTime(14); calculateTotalIncome(14);"><br>
         
         <h2 id="result14"></h2>
     </div>
@@ -447,10 +453,10 @@
     <div class="calculator">
         <h2>딜러 15 계산기</h2>
         <label for="startTime15">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime15" onchange="syncStartTime(15);"><br>
+        <input type="time" id="startTime15" onchange="syncStartTime(15);"><br>
         
         <label for="endTime15">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime15" onchange="syncEndTime(15); calculateTotalIncome(15);"><br>
+        <input type="time" id="endTime15" onchange="syncEndTime(15); calculateTotalIncome(15);"><br>
         
         <h2 id="result15"></h2>
     </div>
@@ -458,10 +464,10 @@
     <div class="calculator">
         <h2>딜러 16 계산기</h2>
         <label for="startTime16">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime16" onchange="syncStartTime(16);"><br>
+        <input type="time" id="startTime16" onchange="syncStartTime(16);"><br>
         
         <label for="endTime16">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime16" onchange="syncEndTime(16); calculateTotalIncome(16);"><br>
+        <input type="time" id="endTime16" onchange="syncEndTime(16); calculateTotalIncome(16);"><br>
         
         <h2 id="result16"></h2>
     </div>
@@ -469,10 +475,10 @@
     <div class="calculator">
         <h2>딜러 17 계산기</h2>
         <label for="startTime17">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime17" onchange="syncStartTime(17);"><br>
+        <input type="time" id="startTime17" onchange="syncStartTime(17);"><br>
         
         <label for="endTime17">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime17" onchange="syncEndTime(17); calculateTotalIncome(17);"><br>
+        <input type="time" id="endTime17" onchange="syncEndTime(17); calculateTotalIncome(17);"><br>
         
         <h2 id="result17"></h2>
     </div>
@@ -480,10 +486,10 @@
     <div class="calculator">
         <h2>딜러 18 계산기</h2>
         <label for="startTime18">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime18" onchange="syncStartTime(18);"><br>
+        <input type="time" id="startTime18" onchange="syncStartTime(18);"><br>
         
         <label for="endTime18">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime18" onchange="syncEndTime(18); calculateTotalIncome(18);"><br>
+        <input type="time" id="endTime18" onchange="syncEndTime(18); calculateTotalIncome(18);"><br>
         
         <h2 id="result18"></h2>
     </div>
@@ -491,10 +497,10 @@
     <div class="calculator">
         <h2>딜러 19 계산기</h2>
         <label for="startTime19">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime19" onchange="syncStartTime(19);"><br>
+        <input type="time" id="startTime19" onchange="syncStartTime(19);"><br>
         
         <label for="endTime19">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime19" onchange="syncEndTime(19); calculateTotalIncome(19);"><br>
+        <input type="time" id="endTime19" onchange="syncEndTime(19); calculateTotalIncome(19);"><br>
         
         <h2 id="result19"></h2>
     </div>
@@ -502,13 +508,15 @@
     <div class="calculator">
         <h2>딜러 20 계산기</h2>
         <label for="startTime20">딜러 시작 시간: </label>
-        <input type="datetime-local" id="startTime20" onchange="syncStartTime(20);"><br>
+        <input type="time" id="startTime20" onchange="syncStartTime(20);"><br>
         
         <label for="endTime20">딜러 마감 시간: </label>
-        <input type="datetime-local" id="endTime20" onchange="syncEndTime(20); calculateTotalIncome(20);"><br>
+        <input type="time" id="endTime20" onchange="syncEndTime(20); calculateTotalIncome(20);"><br>
         
         <h2 id="result20"></h2>
-    </div>        
+    </div>
+
+    <br><br><br>
 
 <br></br>
 <br></br>
