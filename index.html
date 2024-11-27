@@ -225,7 +225,7 @@
     </style>
 </head>
 <body>
-   <h1>딜러 계산기</h1>
+<h1>딜러 계산기</h1>
 
     <script>
         const hourlyWage = 500; // 시급 500포인트
@@ -278,7 +278,8 @@
 
                 if (workingMinutes > 0) {
                     const totalIncome = Math.ceil((workingMinutes / 60) * hourlyWage); // 소수점 올림
-                    document.getElementById(`result${calculatorId}`).innerText = `Total : ${totalIncome} 포인트`;
+                    document.getElementById(`result${calculatorId}`).innerText = 
+                        `시간: ${workingMinutes} 분, 정산: ${totalIncome} 포인트`;
                 } else {
                     document.getElementById(`result${calculatorId}`).innerText = '올바른 시간을 입력하세요.';
                 }
@@ -388,7 +389,7 @@
         <h2>딜러 9 계산기</h2>
         <label for="startTime9">딜러 시작 시간: </label>
         <input type="time" id="startTime9" onchange="syncStartTime(9);"><br>
-        
+
         <label for="endTime9">딜러 마감 시간: </label>
         <input type="time" id="endTime9" onchange="syncEndTime(9); calculateTotalIncome(9);"><br>
         
