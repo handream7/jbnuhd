@@ -232,6 +232,7 @@
             <td>
                 <label for="hourlyWage">시급 선택:</label>
                 <select id="hourlyWage" onchange="updateHourlyWage()">
+	  <option value="300">300 포인트</option>
                     <option value="500">500 포인트</option>
                     <option value="1000">1000 포인트</option>
                 </select>
@@ -240,7 +241,7 @@
     </table>
 
     <script>
-        let hourlyWage = 500; // 초기 시급 500포인트
+        let hourlyWage = 300; // 초기 시급 300포인트
 
         function updateHourlyWage() {
             const wageSelect = document.getElementById('hourlyWage');
