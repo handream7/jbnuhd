@@ -145,7 +145,7 @@
                 const row = `<tr>
                     <td>${entry.date}</td>
                     <td>${entry.status}</td>
-                    <td>${pointsDisplay.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
+                    <td>${entry.points.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
                     <td>${entry.totalPoints.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
                 </tr>`;
                 tableBody.innerHTML += row; // 각 행 추가
