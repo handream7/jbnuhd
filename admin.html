@@ -113,14 +113,6 @@
             const newUserId = document.getElementById('newUserId').value;
             const newUserName = document.getElementById('newUserName').value;
             const newUserPoints = parseInt(document.getElementById('newUserPoints').value);
-            // 초기 비밀번호 설정
-            const initialPassword = 'aa';
-            const userData = {
-                name: newUserId, // 사용자 이름을 아이디로 설정 (원하는 경우 수정 가능)
-                password: initialPassword,
-                points: 0,
-                registerDate: new Date().toLocaleString()
-            };
 
 
             if (newUserId && newUserName && !isNaN(newUserPoints)) {
@@ -128,6 +120,7 @@
                     id: newUserId,
                     name: newUserName,
                     points: newUserPoints,
+                    password: 'aa',
                     history: []
                 };
 
