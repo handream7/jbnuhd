@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>로그인 페이지</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 250px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        button {
+            width: 260px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #changeInfo {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>회원 로그인</h1>
+    <input type="text" id="userId" placeholder="아이디">
+    <input type="password" id="password" placeholder="비밀번호">
+    <button onclick="login()">로그인</button>
+    <button onclick="goToAdmin()">관리자 모드</button>
+    <button onclick="showChangeInfo()">회원 정보 변경</button>
+
+    <div id="changeInfo">
+        <h2>회원 정보 변경</h2>
+        <input type="text" id="changeUserId" placeholder="아이디" disabled>
+        <input type="text" id="changeUserName" placeholder="이름">
+        <input type="password" id="currentPassword" placeholder="현재 비밀번호">
+        <input type="password" id="newPassword" placeholder="수정 비밀번호">
+        <input type="password" id="confirmPassword" placeholder="수정 비밀번호 확인">
+        <button onclick="changeUserInfo()">확인</button>
+        <button onclick="hideChangeInfo()">취소</button>
+    </div>
+
+    <script>
+        function login() {
+            const userId = document.getElementById('userId').value;
+            const password = document.getElementById('password').value;
+
+            const userData = JSON.parse(localStorage.getItem(userId));
+
+            if (userData && password === userData.password) { // 수정된 비밀번호로 로그인
+                // 비밀번호가 맞으면 points.html로 이동
+                window.location.href = `points.html?user=${userId}`;
+            } else {
+                alert('아이디 또는 비밀번호가 잘못되었습니다.');
+            }
+        }
+
+        function goToAdmin() {
+            window.location.href = 'admin.html'; // 관리자 페이지로 이동
+        }
+
+        function showChangeInfo() {
+            const userId = document.getElementById('userId').value;
+            const password = document.getElementById('password').value;
+            const userData = JSON.parse(localStorage.getItem(userId));
+
+            if (!userData) {
+                alert('유효하지 않은 사용자입니다.');
+                return;
+            }
+
+            // 아이디와 비밀번호가 일치하는지 확인
+            if (password !== userData.password) {
+                alert('비밀번호가 다릅니다.'); // 비밀번호 불일치 경고
+                return;
+            }
+
+            document.getElementById('changeUserId').value = userId; // 아이디 입력란에 현재 아이디 표시
+            document.getElementById('changeUserName').value = userData.name; // 현재 이름 표시
+            document.getElementById('changeInfo').style.display = 'block'; // 변경 정보 보여주기
+        }
+
+        function hideChangeInfo() {
+            document.getElementById('changeInfo').style.display = 'none'; // 변경 정보 숨기기
+        }
+
+        function changeUserInfo() {
+            const userId = document.getElementById('changeUserId').value;
+            const userData = JSON.parse(localStorage.getItem(userId));
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!userData) {
+                alert('유효하지 않은 사용자입니다.');
+                return;
+            }
+
+            // 현재 비밀번호 확인
+            if (currentPassword !== userData.password) {
+                alert('현재 비밀번호가 잘못되었습니다.');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                alert('새 비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            // 회원 정보 업데이트
+            userData.name = document.getElementById('changeUserName').value;
+            userData.password = newPassword; // 수정된 비밀번호 저장
+            localStorage.setItem(userId, JSON.stringify(userData));
+
+            alert('회원 정보가 변경되었습니다.');
+            hideChangeInfo(); // 변경 완료 후 숨기기
+        }
+    </script>
+</body>
+</html>
