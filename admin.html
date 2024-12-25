@@ -174,28 +174,37 @@
             document.getElementById('newName').value = '';
         }
 
-        function downloadCsv() {
-            const tableBody = document.getElementById('memberTableBody');
-            const rows = Array.from(tableBody.querySelectorAll('tr'));
-            const csvContent = "회원 아이디,이름,누적 포인트\n" + // 헤더 추가
-                rows.map(row => {
-                    const cells = Array.from(row.children);
-                    const memberId = cells[0].innerText; // 회원 아이디
-                    const name = cells[1].innerText; // 이름
-                    const totalPoints = cells[2].innerText.replace(/,/g, ''); // 누적 포인트 (쉼표 제거)
-                    return `${memberId},${name},${totalPoints}`; // 쉼표로 나누기
-                }).join("\n");
+function downloadCsv() {
+    const tableBody = document.getElementById('memberTableBody');
+    const rows = Array.from(tableBody.querySelectorAll('tr'));
+    const csvContent = "회원 아이디,이름,누적 포인트\n" + // 헤더 추가
+        rows.map(row => {
+            const cells = Array.from(row.children);
+            const memberId = cells[0].innerText; // 회원 아이디
+            const name = cells[1].innerText; // 이름
+            const totalPoints = cells[2].innerText.replace(/,/g, ''); // 누적 포인트 (쉼표 제거)
+            return `${memberId},${name},${totalPoints}`; // 쉼표로 나누기
+        }).join("\n");
 
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "members.csv");
-            document.body.appendChild(link); // Required for FF
+    // 서울 현재 시각 구하기
+    const now = new Date();
+    const options = { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const formatter = new Intl.DateTimeFormat('ko-KR', options);
+    const formattedDate = formatter.format(now)
+        .replace(/\//g, '-') // 슬래시를 하이픈으로 변환
+        .replace(/ /g, '_') // 공백을 언더바로 변환
+        .replace(/:/g, '-'); // 콜론을 하이픈으로 변환
 
-            link.click(); // Download
-            document.body.removeChild(link); // Clean up
-        }
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${formattedDate}.csv`); // 파일명 변경
+    document.body.appendChild(link); // Required for FF
+
+    link.click(); // Download
+    document.body.removeChild(link); // Clean up
+}
     </script>
 
 </body>
