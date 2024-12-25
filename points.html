@@ -2,158 +2,289 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>포인트 관리</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포인트 내역</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background-color: #f4f4f4;
+            margin: 50px;
+            text-align: center; /* 전체 텍스트 가운데 정렬 */
         }
-
-        h1 {
-            margin-bottom: 20px;
-        }
-
-        #welcome {
-            margin-bottom: 20px;
-        }
-
-        .points-option {
+        input[type="text"], input[type="number"] {
+            padding: 10px;
             margin: 10px 0;
+            width: 200px;
         }
-
-        table {
-            border-collapse: separate;
-            border-spacing: 0 10px; /* 열 간격 */
-            width: 100%;
-            max-width: 600px;
-            margin-top: 20px;
-            background-color: white;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #ccc;
-        }
-
-        th {
-            background-color: #007bff;
-            color: white;
-        }
-
         button {
-            width: 260px;
-            padding: 10px;
-            margin: 20px 0;
-            font-size: 16px;
-            background-color: #007bff;
-            color: white;
+            padding: 10px 15px;
+            margin: 10px 5px;
+            background-color: #add8e6; /* 연한 파란색 */
+            color: black; /* 글자 색상 */
             border: none;
-            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
-            text-align: center;
+            font-size: 16px;
+            width: 220px; /* 버튼 너비 조정 */
         }
-
         button:hover {
-            background-color: #0056b3;
+            background-color: #87cefa; /* 더 밝은 파란색으로 변경 */
+        }
+        select {
+            padding: 10px;
+            margin: 10px 0;
+            width: 220px; /* 드롭다운 박스 너비 조정 */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <h1>포인트 관리</h1>
-    <h2 id="welcome"></h2>
-    <form id="pointsForm">
-        <div class="points-option">
-            <label><input type="radio" name="points" value="500"> 500 포인트</label>
-        </div>
-        <div class="points-option">
-            <label><input type="radio" name="points" value="1000"> 1,000 포인트</label>
-        </div>
-        <div class="points-option">
-            <label><input type="radio" name="points" value="3000"> 3,000 포인트</label>
-        </div>
-        <button type="button" onclick="deductPoints()">확인</button>
-    </form>
 
-    <table border="1">
+    <h1>포인트 내역</h1>
+
+    <div id="userInfo"></div>
+
+    <h3>포인트 사용</h3>
+    <label>
+        <input type="radio" name="points" value="500"> 500 포인트
+    </label>
+    <label>
+        <input type="radio" name="points" value="1000"> 1,000 포인트
+    </label>
+    <label>
+        <input type="radio" name="points" value="3000"> 3,000 포인트
+    </label><br>
+    <button id="confirmPointsBtn">확인</button>
+
+    <h3>포인트 내역 월별보기</h3>
+    <label for="monthSelect">연월 선택:</label>
+    <select id="monthSelect">
+        <!-- 연월 옵션이 여기에 추가됩니다. -->
+    </select>
+    <br>
+    <button id="filterPointsBtn">확인</button> <!-- 버튼을 드롭다운 아래로 이동 -->
+
+    <h2>포인트 내역</h2>
+    <table>
         <thead>
             <tr>
-                <th>날짜</th>
-                <th>상태</th>
-                <th>포인트</th>
-                <th>누적포인트</th>
+                <th>날짜/시간</th>
+                <th>포인트 내역</th>
+                <th>적립/사용</th>
+                <th>누적 포인트</th>
             </tr>
         </thead>
-        <tbody id="pointsTable"></tbody>
+        <tbody id="pointsTableBody">
+            <!-- 포인트 내역이 여기에 추가됩니다. -->
+        </tbody>
     </table>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyClf-DOqh06LAyCuTUbYGTCp7ytnTCwuuM",
+            authDomain: "jbnuhd-637d2.firebaseapp.com",
+            projectId: "jbnuhd-637d2",
+            storageBucket: "jbnuhd-637d2.appspot.com",
+            messagingSenderId: "983177667764",
+            appId: "1:983177667764:web:85c86459041e1c391223e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         const urlParams = new URLSearchParams(window.location.search);
-        const user = urlParams.get('user');
-        const userData = JSON.parse(localStorage.getItem(user));
+        const userId = urlParams.get('userId'); // URL에서 userId 파라미터 가져오기
+        const pointsToAdd = parseInt(urlParams.get('points')); // URL에서 points 파라미터 가져오기
+        const userInfoDiv = document.getElementById('userInfo');
+        const pointsTableBody = document.getElementById('pointsTableBody');
+        const monthSelect = document.getElementById('monthSelect');
 
-        if (!userData) {
-            alert('유효하지 않은 사용자입니다.');
-            window.location.href = 'index2.html'; // 로그인 페이지로 리디렉션
-        }
+        async function loadUserInfo() {
+            const userDoc = await getDoc(doc(db, "users", userId));
+            if (userDoc.exists()) {
+                const data = userDoc.data();
+                userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${(data.points || 0).toLocaleString()}`; // 포인트 포맷팅
+                loadPoints(); // 포인트 내역 로드
 
-        document.getElementById('welcome').innerText = user + '님 환영합니다!';
-
-        function deductPoints() {
-            const selectedOption = document.querySelector('input[name="points"]:checked');
-            if (!selectedOption) {
-                alert('포인트를 선택하세요.');
-                return;
-            }
-
-            const pointToDeduct = parseInt(selectedOption.value);
-            if (userData.points >= pointToDeduct) {
-                userData.points -= pointToDeduct;
-
-                // 포인트 내역 기록
-                const historyEntry = {
-                    date: new Date().toLocaleString(),
-                    status: '사용',
-                    points: -pointToDeduct,
-                    totalPoints: userData.points
-                };
-                userData.history.push(historyEntry);
-                localStorage.setItem(user, JSON.stringify(userData));
-
-                updateTable();
+                // URL에서 포인트를 가져온 경우
+                if (pointsToAdd) {
+                    await addPoints(pointsToAdd, data.points || 0);
+                }
             } else {
-                alert('포인트가 부족합니다.');
+                alert('해당 사용자가 존재하지 않습니다.');
+                window.location.href = 'index2.html'; // 로그인 페이지로 리다이렉트
             }
         }
 
-        function updateTable() {
-            const tableBody = document.getElementById('pointsTable');
-            tableBody.innerHTML = '';
+        async function loadPoints() {
+            const querySnapshot = await getDocs(collection(db, "points"));
+            const pointsArray = []; // 포인트 내역을 저장할 배열
 
-            // 최신 내역이 위로 오도록 정렬 (역순)
-            const sortedHistory = userData.history.slice().reverse(); // 복사 후 역순 정렬
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.username === userId) { // 해당 사용자 ID로 필터링
+                    pointsArray.push({
+                        timestamp: data.timestamp,
+                        points: data.points,
+                        type: data.type,
+                        totalPoints: data.totalPoints
+                    });
+                }
+            });
 
-            sortedHistory.forEach(entry => {
-                const row = `<tr>
-                    <td>${entry.date}</td>
-                    <td>${entry.status}</td>
-                    <td>${entry.points.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
-                    <td>${entry.totalPoints.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}</td>
-                </tr>`;
-                tableBody.innerHTML += row; // 각 행 추가
+            // 최신 항목이 위로 오도록 정렬
+            pointsArray.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+
+            // 테이블에 추가
+            pointsTableBody.innerHTML = ''; // 기존 테이블 내용 초기화
+            pointsArray.forEach(item => {
+                const newRow = pointsTableBody.insertRow();
+                newRow.innerHTML = `
+                    <td>${new Date(item.timestamp.seconds * 1000).toLocaleString()}</td>
+                    <td>${item.points.toLocaleString()}</td> <!-- 포인트 포맷팅 -->
+                    <td>${item.type}</td>
+                    <td>${item.totalPoints.toLocaleString()}</td> <!-- 포인트 포맷팅 -->
+                `;
             });
         }
 
-        // 페이지 로드 시 테이블 업데이트
-        updateTable();
+        async function addPoints(pointsValue, currentPoints) {
+            const newTotalPoints = currentPoints + pointsValue; // 누적 포인트 계산
+
+            // 포인트 내역 추가
+            await addDoc(collection(db, "points"), {
+                username: userId,
+                points: pointsValue,
+                type: "적립", // 적립으로 설정
+                timestamp: new Date(),
+                totalPoints: newTotalPoints
+            });
+
+            // 누적 포인트 업데이트 (이름을 변경하지 않도록 수정)
+            await setDoc(doc(db, "users", userId), {
+                points: newTotalPoints,
+            }, { merge: true }); // merge: true를 사용하여 기존 데이터를 유지
+
+            // 정보 업데이트
+            userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${newTotalPoints.toLocaleString()}`; // 포인트 포맷팅
+        }
+
+        async function usePoints(pointsValue, currentPoints) {
+            const newTotalPoints = currentPoints - pointsValue; // 누적 포인트 차감
+
+            if (newTotalPoints < 0) {
+                alert('포인트가 부족합니다.');
+                return;
+            }
+
+            // 포인트 내역 추가
+            await addDoc(collection(db, "points"), {
+                username: userId,
+                points: pointsValue,
+                type: "사용", // 사용으로 설정
+                timestamp: new Date(),
+                totalPoints: newTotalPoints
+            });
+
+            // 누적 포인트 업데이트 (이름을 변경하지 않도록 수정)
+            await setDoc(doc(db, "users", userId), {
+                points: newTotalPoints,
+            }, { merge: true }); // merge: true를 사용하여 기존 데이터를 유지
+
+            // 정보 업데이트
+            userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${newTotalPoints.toLocaleString()}`; // 포인트 포맷팅
+            loadPoints(); // 포인트 내역 새로 고침
+        }
+
+        // 포인트 사용 버튼 클릭 이벤트 추가
+        document.getElementById('confirmPointsBtn').addEventListener('click', async () => {
+            const selectedPoints = document.querySelector('input[name="points"]:checked');
+            if (!selectedPoints) {
+                alert('포인트를 선택해주세요.');
+                return;
+            }
+            const pointsValue = parseInt(selectedPoints.value);
+            const userDoc = await getDoc(doc(db, "users", userId));
+            await usePoints(pointsValue, userDoc.data().points || 0);
+        });
+
+        // 내역 필터링 버튼 클릭 이벤트 추가
+        document.getElementById('filterPointsBtn').addEventListener('click', loadFilteredPoints);
+
+        // 선택한 월의 포인트 내역을 로드하는 함수
+        async function loadFilteredPoints() {
+            const selectedMonth = monthSelect.value;
+            const querySnapshot = await getDocs(collection(db, "points"));
+            const pointsArray = []; // 포인트 내역을 저장할 배열
+
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.username === userId) { // 해당 사용자 ID로 필터링
+                    const date = new Date(data.timestamp.seconds * 1000);
+                    const yearMonth = date.toISOString().slice(0, 7); // YYYY-MM 형식
+                    if (yearMonth === selectedMonth) {
+                        pointsArray.push({
+                            timestamp: data.timestamp,
+                            points: data.points,
+                            type: data.type,
+                            totalPoints: data.totalPoints
+                        });
+                    }
+                }
+            });
+
+            // 최신 항목이 위로 오도록 정렬
+            pointsArray.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+
+            // 테이블에 추가
+            pointsTableBody.innerHTML = ''; // 기존 테이블 내용 초기화
+            pointsArray.forEach(item => {
+                const newRow = pointsTableBody.insertRow();
+                newRow.innerHTML = `
+                    <td>${new Date(item.timestamp.seconds * 1000).toLocaleString()}</td>
+                    <td>${item.points.toLocaleString()}</td> <!-- 포인트 포맷팅 -->
+                    <td>${item.type}</td>
+                    <td>${item.totalPoints.toLocaleString()}</td> <!-- 포인트 포맷팅 -->
+                `;
+            });
+        }
+
+        // 연도와 월 옵션 생성 (2024년 12월부터 시작)
+        function populateMonths() {
+            const startYear = 2024;
+            const startMonth = 12;
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth() + 1; // 0부터 시작하므로 1 더하기
+
+            for (let year = startYear; year <= currentYear; year++) {
+                const monthLimit = (year === currentYear) ? currentMonth : 12;
+                for (let month = (year === startYear ? startMonth : 1); month <= monthLimit; month++) {
+                    const monthOption = document.createElement('option');
+                    monthOption.value = `${year}-${month < 10 ? '0' + month : month}`; // YYYY-MM 형식
+                    monthOption.textContent = `${year}년 ${month}월`;
+                    monthSelect.appendChild(monthOption);
+                }
+            }
+
+            // 드롭다운의 기본값을 현재 연월로 설정
+            monthSelect.value = `${currentYear}-${currentMonth < 10 ? '0' + currentMonth : currentMonth}`;
+        }
+
+        // 페이지 로드 시 사용자 정보와 월 드롭다운 옵션 불러오기
+        loadUserInfo();
+        populateMonths();
     </script>
+
 </body>
 </html>
+

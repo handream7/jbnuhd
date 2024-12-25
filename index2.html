@@ -2,151 +2,167 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>로그인 페이지</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원로그인</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            margin: 0;
-            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
         }
-
-        h1 {
-            margin-bottom: 20px;
-        }
-
         input {
-            width: 250px;
-            padding: 10px;
-            margin: 10px 0;
+            width: 300px;
+            height: 40px;
             font-size: 16px;
+            margin: 10px 0;
         }
-
         button {
-            width: 260px;
-            padding: 10px;
-            margin: 10px 0;
+            width: 300px;
+            height: 40px;
             font-size: 16px;
-            background-color: #007bff;
-            color: white;
+            background-color: #add8e6; /* 연한 파란색 */
+            color: black; /* 글자 색상 변경 */
             border: none;
-            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            margin: 10px 0;
         }
-
         button:hover {
-            background-color: #0056b3;
-        }
-
-        #changeInfo {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #fff;
+            background-color: #87cefa; /* 더 밝은 파란색으로 변경 */
         }
     </style>
-</head>
-<body>
-    <h1>회원 로그인</h1>
-    <input type="text" id="userId" placeholder="아이디">
-    <input type="password" id="password" placeholder="비밀번호">
-    <button onclick="login()">로그인</button>
-    <button onclick="goToAdmin()">관리자 모드</button>
-    <button onclick="showChangeInfo()">회원 정보 변경</button>
+    <script type="module">
+        // Firebase SDK 모듈 가져오기
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-    <div id="changeInfo">
-        <h2>회원 정보 변경</h2>
-        <input type="text" id="changeUserId" placeholder="아이디" disabled>
-        <input type="text" id="changeUserName" placeholder="이름">
-        <input type="password" id="currentPassword" placeholder="현재 비밀번호">
-        <input type="password" id="newPassword" placeholder="수정 비밀번호">
-        <input type="password" id="confirmPassword" placeholder="수정 비밀번호 확인">
-        <button onclick="changeUserInfo()">확인</button>
-        <button onclick="hideChangeInfo()">취소</button>
-    </div>
+        // Firebase 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyClf-DOqh06LAyCuTUbYGTCp7ytnTCwuuM",
+            authDomain: "jbnuhd-637d2.firebaseapp.com",
+            projectId: "jbnuhd-637d2",
+            storageBucket: "jbnuhd-637d2.appspot.com",
+            messagingSenderId: "983177667764",
+            appId: "1:983177667764:web:85c86459041e1c391223e1"
+        };
 
-    <script>
-        function login() {
+        // Firebase 초기화
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 로그인 함수
+        window.login = async function() {
             const userId = document.getElementById('userId').value;
             const password = document.getElementById('password').value;
 
-            const userData = JSON.parse(localStorage.getItem(userId));
+            const docRef = doc(db, "users", userId);
+            const docSnap = await getDoc(docRef);
 
-            if (userData && password === userData.password) { // 수정된 비밀번호로 로그인
-                // 비밀번호가 맞으면 points.html로 이동
-                window.location.href = `points.html?user=${userId}`;
+            if (docSnap.exists()) {
+                const userData = docSnap.data();
+                if (userData.password === password) {
+                    alert("로그인 성공!");
+                    window.location.href = `points.html?userId=${encodeURIComponent(userId)}`;
+                } else {
+                    alert("비밀번호가 일치하지 않습니다.");
+                }
             } else {
-                alert('아이디 또는 비밀번호가 잘못되었습니다.');
+                alert("아이디가 존재하지 않습니다.");
             }
         }
 
-        function goToAdmin() {
-            window.location.href = 'admin.html'; // 관리자 페이지로 이동
-        }
-
-        function showChangeInfo() {
+        // 회원정보 변경 함수
+        window.changeUserInfo = async function() {
             const userId = document.getElementById('userId').value;
             const password = document.getElementById('password').value;
-            const userData = JSON.parse(localStorage.getItem(userId));
 
-            if (!userData) {
-                alert('유효하지 않은 사용자입니다.');
-                return;
+            const docRef = doc(db, "users", userId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const userData = docSnap.data();
+                if (userData.password === password) {
+                    const changeWindow = window.open("", "_blank", "width=400,height=400");
+                    changeWindow.document.write(`
+                        <html lang="ko">
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>회원정보 변경</title>
+                            <script type="module">
+                                import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+                                import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+                                // Firebase 설정
+                                const firebaseConfig = {
+                                    apiKey: "AIzaSyClf-DOqh06LAyCuTUbYGTCp7ytnTCwuuM",
+                                    authDomain: "jbnuhd-637d2.firebaseapp.com",
+                                    projectId: "jbnuhd-637d2",
+                                    storageBucket: "jbnuhd-637d2.appspot.com",
+                                    messagingSenderId: "983177667764",
+                                    appId: "1:983177667764:web:85c86459041e1c391223e1"
+                                };
+
+                                // Firebase 초기화
+                                const app = initializeApp(firebaseConfig);
+                                const db = getFirestore(app);
+
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    document.getElementById('updateButton').onclick = async function() {
+                                        const name = document.getElementById('nameDisplay').value;
+                                        const newPassword = document.getElementById('newPassword').value;
+                                        const confirmPassword = document.getElementById('confirmPassword').value;
+
+                                        if (newPassword === confirmPassword) {
+                                            await updateDoc(doc(db, "users", "${userId}"), { 
+                                                name: name, // 이름 업데이트
+                                                password: newPassword // 비밀번호 업데이트
+                                            });
+                                            alert("회원정보가 성공적으로 변경되었습니다."); // 성공 알림
+                                            window.close();
+                                        } else {
+                                            alert("새 비밀번호와 확인 비밀번호가 일치하지 않습니다.");
+                                        }
+                                    }
+                                });
+                            <\/script>
+                        </head>
+                        <body>
+                            <h1>회원정보 변경</h1>
+                            <label for="nameDisplay">이름:</label>
+                            <input type="text" id="nameDisplay" value="${userData.name}" required><br><br>
+                            <label for="newPassword">새 비밀번호:</label>
+                            <input type="password" id="newPassword" required><br><br>
+                            <label for="confirmPassword">새 비밀번호 확인:</label>
+                            <input type="password" id="confirmPassword" required><br><br>
+                            <button id="updateButton">확인</button>
+                        </body>
+                        </html>
+                    `);
+                    changeWindow.document.close(); // 문서 닫기
+                } else {
+                    alert("비밀번호가 일치하지 않습니다.");
+                }
+            } else {
+                alert("사용자를 찾을 수 없습니다.");
             }
-
-            // 아이디와 비밀번호가 일치하는지 확인
-            if (password !== userData.password) {
-                alert('비밀번호가 다릅니다.'); // 비밀번호 불일치 경고
-                return;
-            }
-
-            document.getElementById('changeUserId').value = userId; // 아이디 입력란에 현재 아이디 표시
-            document.getElementById('changeUserName').value = userData.name; // 현재 이름 표시
-            document.getElementById('changeInfo').style.display = 'block'; // 변경 정보 보여주기
         }
 
-        function hideChangeInfo() {
-            document.getElementById('changeInfo').style.display = 'none'; // 변경 정보 숨기기
-        }
-
-        function changeUserInfo() {
-            const userId = document.getElementById('changeUserId').value;
-            const userData = JSON.parse(localStorage.getItem(userId));
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (!userData) {
-                alert('유효하지 않은 사용자입니다.');
-                return;
-            }
-
-            // 현재 비밀번호 확인
-            if (currentPassword !== userData.password) {
-                alert('현재 비밀번호가 잘못되었습니다.');
-                return;
-            }
-
-            if (newPassword !== confirmPassword) {
-                alert('새 비밀번호가 일치하지 않습니다.');
-                return;
-            }
-
-            // 회원 정보 업데이트
-            userData.name = document.getElementById('changeUserName').value;
-            userData.password = newPassword; // 수정된 비밀번호 저장
-            localStorage.setItem(userId, JSON.stringify(userData));
-
-            alert('회원 정보가 변경되었습니다.');
-            hideChangeInfo(); // 변경 완료 후 숨기기
+        // 관리자 모드 버튼 클릭 시 이동
+        window.goToAdmin = function() {
+            window.location.href = "admin.html";
         }
     </script>
+</head>
+<body>
+    <h1>회원로그인</h1>
+    <label for="userId">아이디:</label>
+    <input type="text" id="userId" required><br>
+    <label for="password">비밀번호:</label>
+    <input type="password" id="password" required><br>
+    <button onclick="login()">로그인</button>
+    <button onclick="changeUserInfo()">회원정보 변경</button>
+    <button onclick="goToAdmin()">관리자 모드</button>
 </body>
 </html>

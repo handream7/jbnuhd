@@ -2,196 +2,201 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>관리자 페이지</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 모드</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        input[type="text"], input[type="password"], input[type="number"] {
+            padding: 10px;
+            margin: 10px 0;
+            width: 200px;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 10px 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer; /* 포인터 커서 추가 */
+        }
+        td:hover {
+            background-color: #f0f0f0; /* 마우스 오버 시 배경색 변화 */
+        }
+    </style>
 </head>
 <body>
-    <h1>관리자 페이지</h1>
-    <input type="password" id="adminPassword" placeholder="관리자 비밀번호">
-    <button onclick="loginAsAdmin()">로그인</button>
 
-    <div id="userList" style="display:none;">
-        <h2>회원 목록</h2>
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>아이디</th>
-                    <th>이름</th>
-                    <th>누적포인트</th>
-                    <th>포인트 입력</th>
-                    <th>확인</th>
-                </tr>
-            </thead>
-            <tbody id="usersTable"></tbody>
-        </table>
-        <button onclick="sortUsers()">아이디 정렬</button>
-        <h3>회원 추가</h3>
-        <input type="text" id="newUserId" placeholder="아이디">
-        <input type="text" id="newUserName" placeholder="이름">
-        <input type="number" id="newUserPoints" placeholder="누적 포인트" value="0">
-        <button onclick="addUser()">추가</button>
+    <h1>관리자 모드</h1>
 
-        <h3>회원 삭제</h3>
-        <select id="deleteUserId"></select>
-        <button onclick="deleteUser()">삭제</button>
-
-        <h3>데이터 저장</h3>
-        <button onclick="downloadData()">저장</button>
+    <div id="authSection">
+        <label for="adminPassword">비밀번호:</label><br>
+        <input type="password" id="adminPassword" required><br>
+        <button id="checkPasswordBtn">확인</button>
     </div>
 
-    <script>
-        // 초기 데이터 로컬스토리지에 저장
-        const initialUsers = [
+    <div id="tableSection" style="display:none;">
+        <h2>회원 정보</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>회원 아이디</th>
+                    <th>이름</th>
+                    <th>누적 포인트</th>
+                    <th>포인트 입력</th>
+                    <th>적립</th>
+                </tr>
+            </thead>
+            <tbody id="memberTableBody">
+                <!-- 회원 정보가 여기에 추가됩니다. -->
+            </tbody>
+        </table>
 
-        ];
+        <h3>회원 추가</h3>
+        <label for="newUsername">회원 아이디:</label><br>
+        <input type="text" id="newUsername" required><br>
+        <label for="newName">이름:</label><br>
+        <input type="text" id="newName" required><br>
+        <button id="addMemberBtn">추가</button>
+        <button id="downloadCsvBtn">CSV 다운로드</button> <!-- CSV 다운로드 버튼 추가 -->
+    </div>
 
-        // 예시 회원 목록 저장
-        initialUsers.forEach(user => {
-            localStorage.setItem(user.id, JSON.stringify(user));
-        });
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        import { getFirestore, getDocs, collection, setDoc, doc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        function loginAsAdmin() {
-            const password = document.getElementById('adminPassword').value;
-            if (password === 'poker') { // 관리자의 비밀번호
-                document.getElementById('userList').style.display = 'block';
-                loadUsers();
+        const firebaseConfig = {
+            apiKey: "AIzaSyClf-DOqh06LAyCuTUbYGTCp7ytnTCwuuM",
+            authDomain: "jbnuhd-637d2.firebaseapp.com",
+            projectId: "jbnuhd-637d2",
+            storageBucket: "jbnuhd-637d2.appspot.com",
+            messagingSenderId: "983177667764",
+            appId: "1:983177667764:web:85c86459041e1c391223e1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const correctPassword = "poker";
+
+        document.getElementById('checkPasswordBtn').addEventListener('click', checkPassword);
+        document.getElementById('addMemberBtn').addEventListener('click', addMember);
+        document.getElementById('downloadCsvBtn').addEventListener('click', downloadCsv); // CSV 다운로드 버튼 이벤트 리스너 추가
+
+        function checkPassword() {
+            const inputPassword = document.getElementById('adminPassword').value;
+            if (inputPassword === correctPassword) {
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('tableSection').style.display = 'block';
+                loadMembers(); // 회원 데이터 로드
             } else {
-                alert('비밀번호가 잘못되었습니다.');
+                alert('비밀번호가 일치하지 않습니다.');
             }
         }
 
-        function loadUsers() {
-            const users = Object.keys(localStorage).filter(key => !key.includes('admin'));
-            const tableBody = document.getElementById('usersTable');
-            const deleteUserSelect = document.getElementById('deleteUserId');
-            tableBody.innerHTML = '';
-            deleteUserSelect.innerHTML = ''; // 드롭다운 초기화
+        async function loadMembers() {
+            const usersSnapshot = await getDocs(collection(db, "users"));
+            const tableBody = document.getElementById('memberTableBody');
+            const membersArray = []; // 회원 정보를 저장할 배열
 
-            users.forEach(userId => {
-                const userData = JSON.parse(localStorage.getItem(userId));
-                const row = `<tr>
-                    <td><a href="points.html?user=${userId}" target="_blank">${userId}</a></td>
-                    <td>${userData.name}</td>
-                    <td>${userData.points}</td>
-                    <td><input type="number" id="input_${userId}" placeholder="포인트"></td>
-                    <td><button onclick="updatePoints('${userId}')">확인</button></td>
-                </tr>`;
-                tableBody.innerHTML += row;
+            usersSnapshot.forEach(doc => {
+                const data = doc.data();
+                const pointsFormatted = (data.points || 0).toLocaleString(); // 포인트 포맷팅
+                membersArray.push({
+                    id: doc.id,
+                    name: data.name,
+                    points: pointsFormatted
+                });
+            });
 
-                // 드롭다운에 사용자 추가
-                const option = document.createElement('option');
-                option.value = userId;
-                option.textContent = userId;
-                deleteUserSelect.appendChild(option);
+            // 이름순으로 정렬
+            membersArray.sort((a, b) => a.name.localeCompare(b.name));
+
+            // 테이블에 추가
+            tableBody.innerHTML = ""; // 기존 내용 초기화
+            membersArray.forEach(member => {
+                const newRow = tableBody.insertRow();
+                newRow.innerHTML = `
+                    <td class="memberId" data-user-id="${member.id}">${member.id}</td>
+                    <td>${member.name}</td>
+                    <td>${member.points}</td> <!-- 포맷팅된 포인트 출력 -->
+                    <td><input type="number" min="0" value="0" /></td>
+                    <td><button class="earnPointsBtn" data-user-id="${member.id}">적립</button></td>
+                `;
+            });
+
+            // 회원 아이디 클릭 이벤트 추가
+            const memberIdCells = document.querySelectorAll('.memberId');
+            memberIdCells.forEach(cell => {
+                cell.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    window.location.href = `points.html?userId=${userId}`;
+                });
+            });
+
+            // 적립 버튼에 이벤트 리스너 추가
+            const earnButtons = document.querySelectorAll('.earnPointsBtn');
+            earnButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const pointsInput = this.closest('tr').querySelector('input[type="number"]');
+                    const pointsToAdd = parseInt(pointsInput.value);
+
+                    if (pointsToAdd > 0) {
+                        // 포인트 적립 후 points.html로 이동
+                        window.location.href = `points.html?userId=${userId}&points=${pointsToAdd}&type=적립`;
+                    } else {
+                        alert('적립할 포인트를 입력하세요.');
+                    }
+                });
             });
         }
 
-        function updatePoints(userId) {
-            const pointInput = document.getElementById(`input_${userId}`).value;
-            const userData = JSON.parse(localStorage.getItem(userId));
-            const pointsToUpdate = parseInt(pointInput);
+        async function addMember() {
+            const username = document.getElementById('newUsername').value;
+            const name = document.getElementById('newName').value;
 
-            if (!isNaN(pointsToUpdate)) {
-                userData.points += pointsToUpdate;
-
-                // 포인트 내역 기록
-                const action = pointsToUpdate > 0 ? '적립' : '사용';
-                const historyEntry = {
-                    date: new Date().toLocaleString(),
-                    status: action,
-                    points: pointsToUpdate,
-                    totalPoints: userData.points
-                };
-                userData.history.push(historyEntry);
-                localStorage.setItem(userId, JSON.stringify(userData));
-                loadUsers();
-            } else {
-                alert('유효한 포인트를 입력하세요.');
-            }
-        }
-
-        function addUser() {
-            const newUserId = document.getElementById('newUserId').value;
-            const newUserName = document.getElementById('newUserName').value;
-            const newUserPoints = parseInt(document.getElementById('newUserPoints').value);
-
-
-            if (newUserId && newUserName && !isNaN(newUserPoints)) {
-                const newUser = {
-                    id: newUserId,
-                    name: newUserName,
-                    points: newUserPoints,
-                    password: 'aa',
-                    history: []
-                };
-
-                // 회원 정보를 로컬스토리지에 저장
-                localStorage.setItem(newUserId, JSON.stringify(newUser));
-
-                // 새로운 회원이 추가된 후 테이블을 업데이트
-                loadUsers();
-
-                // 입력 필드 초기화
-                document.getElementById('newUserId').value = '';
-                document.getElementById('newUserName').value = '';
-                document.getElementById('newUserPoints').value = '0';
-            } else {
-                alert('모든 필드를 올바르게 입력하세요.');
-            }
-        }
-
-        function deleteUser() {
-            const deleteUserId = document.getElementById('deleteUserId').value;
-            if (deleteUserId) {
-                localStorage.removeItem(deleteUserId);
-                loadUsers(); // 테이블 업데이트
-            } else {
-                alert('삭제할 회원을 선택하세요.');
-            }
-        }
-
-        function sortUsers() {
-            const users = Object.keys(localStorage).filter(key => !key.includes('admin'))
-                .sort((a, b) => a.localeCompare(b)); // 알파벳 순 정렬
-            const tableBody = document.getElementById('usersTable');
-            tableBody.innerHTML = '';
-
-            users.forEach(userId => {
-                const userData = JSON.parse(localStorage.getItem(userId));
-                const row = `<tr>
-                    <td><a href="points.html?user=${userId}" target="_blank">${userId}</a></td>
-                    <td>${userData.name}</td>
-                    <td>${userData.points}</td>
-                    <td><input type="number" id="input_${userId}" placeholder="포인트"></td>
-                    <td><button onclick="updatePoints('${userId}')">확인</button></td>
-                </tr>`;
-                tableBody.innerHTML += row;
+            await setDoc(doc(db, "users", username), {
+                name: name,
+                points: 0,
+                password: "aa" // 기본 비밀번호 설정
             });
+            loadMembers(); // 회원 데이터 새로 고침
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newName').value = '';
         }
 
-        function downloadData() {
-            const users = Object.keys(localStorage).filter(key => !key.includes('admin'));
-            let csvContent = "data:text/csv;charset=utf-8,아이디,이름,누적포인트\n";
+        function downloadCsv() {
+            const tableBody = document.getElementById('memberTableBody');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            const csvContent = "회원 아이디,이름,누적 포인트\n" + // 헤더 추가
+                rows.map(row => {
+                    const cells = Array.from(row.children);
+                    const memberId = cells[0].innerText; // 회원 아이디
+                    const name = cells[1].innerText; // 이름
+                    const totalPoints = cells[2].innerText.replace(/,/g, ''); // 누적 포인트 (쉼표 제거)
+                    return `${memberId},${name},${totalPoints}`; // 쉼표로 나누기
+                }).join("\n");
 
-            users.forEach(userId => {
-                const userData = JSON.parse(localStorage.getItem(userId));
-                const row = `${userId},${userData.name},${userData.points}\n`;
-                csvContent += row;
-            });
-
-            // 날짜 및 시간 정보 생성
-            const now = new Date();
-            const formattedDate = `${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}${now.getSeconds().toString().padStart(2, '0')}`;
-
-            // CSV 파일 다운로드
-            const encodedUri = encodeURI(csvContent);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `회원정보_${formattedDate}.csv`); // 파일명에 날짜 및 시간 추가
+            link.setAttribute("href", url);
+            link.setAttribute("download", "members.csv");
             document.body.appendChild(link); // Required for FF
 
-            link.click(); // Automatically click the link to trigger the download
-            document.body.removeChild(link); // Clean up after download
+            link.click(); // Download
+            document.body.removeChild(link); // Clean up
         }
     </script>
+
 </body>
 </html>
