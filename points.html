@@ -86,6 +86,8 @@
         </tbody>
     </table>
 
+    <button id="goToHomeBtn">초기화면으로 가기</button> <!-- 초기화면 버튼 추가 -->
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
@@ -279,6 +281,11 @@
             // 드롭다운의 기본값을 현재 연월로 설정
             monthSelect.value = `${currentYear}-${currentMonth < 10 ? '0' + currentMonth : currentMonth}`;
         }
+
+        // 초기화면 버튼 클릭 이벤트 추가
+        document.getElementById('goToHomeBtn').addEventListener('click', () => {
+            window.location.href = 'index2.html'; // 초기화면으로 이동
+        });
 
         // 페이지 로드 시 사용자 정보와 월 드롭다운 옵션 불러오기
         loadUserInfo();
