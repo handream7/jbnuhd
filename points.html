@@ -96,7 +96,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyClf-DOqh06LAyCuTUbYGTCp7ytnTCwuuM",
@@ -179,9 +179,9 @@
             });
 
             // 누적 포인트 업데이트 (이름을 변경하지 않도록 수정)
-            await setDoc(doc(db, "users", userId), {
+            await updateDoc(doc(db, "users", userId), { // setDoc 대신 updateDoc 사용
                 points: newTotalPoints,
-            }, { merge: true }); // merge: true를 사용하여 기존 데이터를 유지
+            }); // merge: true를 사용하지 않음, updateDoc은 기본적으로 병합
 
             // 정보 업데이트
             userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${newTotalPoints.toLocaleString()}`; // 포인트 포맷팅
@@ -205,9 +205,9 @@
             });
 
             // 누적 포인트 업데이트 (이름을 변경하지 않도록 수정)
-            await setDoc(doc(db, "users", userId), {
+            await updateDoc(doc(db, "users", userId), { // setDoc 대신 updateDoc 사용
                 points: newTotalPoints,
-            }, { merge: true }); // merge: true를 사용하여 기존 데이터를 유지
+            }); // merge: true를 사용하지 않음, updateDoc은 기본적으로 병합
 
             // 정보 업데이트
             userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${newTotalPoints.toLocaleString()}`; // 포인트 포맷팅
