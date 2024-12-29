@@ -192,8 +192,8 @@
 
             if (newTotalPoints < 0) {
                 alert('포인트가 부족합니다.');
-                return;
-            }
+        return false; // 포인트 부족 시 false 반환
+    }
 
             // 포인트 내역 추가
     await addDoc(collection(db, "points"), {
@@ -212,22 +212,27 @@
             // 정보 업데이트
             userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${newTotalPoints.toLocaleString()}`; // 포인트 포맷팅
             loadPoints(); // 포인트 내역 새로 고침
+    return true; // 포인트 사용 성공 시 true 반환
         }
 
         // 포인트 사용 버튼 클릭 이벤트 추가
-        document.getElementById('confirmPointsBtn').addEventListener('click', async () => {
-            const selectedPoints = document.querySelector('input[name="points"]:checked');
-            if (!selectedPoints) {
-                alert('포인트를 선택해주세요.');
-                return;
-            }
-            const pointsValue = parseInt(selectedPoints.value);
-            const userDoc = await getDoc(doc(db, "users", userId));
-            await usePoints(pointsValue, userDoc.data().points || 0);
-
-    // 포인트 사용 알림 추가
-    alert(`${pointsValue.toLocaleString()} 포인트를 사용하였습니다.`);
-        });
+document.getElementById('confirmPointsBtn').addEventListener('click', async () => {
+    const selectedPoints = document.querySelector('input[name="points"]:checked');
+    if (!selectedPoints) {
+        alert('포인트를 선택해주세요.');
+        return;
+    }
+    const pointsValue = parseInt(selectedPoints.value);
+    const userDoc = await getDoc(doc(db, "users", userId));
+    
+    // 포인트 사용 함수 호출
+    const result = await usePoints(pointsValue, userDoc.data().points || 0);
+    
+    // 포인트 사용 성공 시 알림 추가
+    if (result) {
+        alert(`${pointsValue.toLocaleString()} 포인트를 사용하였습니다.`);
+    }
+});
 
         // 내역 필터링 버튼 클릭 이벤트 추가
         document.getElementById('filterPointsBtn').addEventListener('click', loadFilteredPoints);
