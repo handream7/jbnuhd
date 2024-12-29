@@ -27,10 +27,10 @@
             border: 1px solid #ddd;
             padding: 8px;
             text-align: center;
-            cursor: pointer; /* 포인터 커서 추가 */
+            cursor: pointer;
         }
         td:hover {
-            background-color: #f0f0f0; /* 마우스 오버 시 배경색 변화 */
+            background-color: #f0f0f0;
         }
     </style>
 </head>
@@ -46,6 +46,15 @@
 
     <div id="tableSection" style="display:none;">
         <h2>회원 정보</h2>
+
+        <label for="sortSelect">정렬 기준:</label>
+        <select id="sortSelect">
+            <option value="id">회원 아이디순</option>
+            <option value="name">이름순</option>
+            <option value="points">누적 포인트순</option>
+        </select>
+        <button id="sortBtn">확인</button>
+
         <table>
             <thead>
                 <tr>
@@ -67,7 +76,7 @@
         <label for="newName">이름:</label><br>
         <input type="text" id="newName" required><br>
         <button id="addMemberBtn">추가</button>
-        <button id="downloadCsvBtn">CSV 다운로드</button> <!-- CSV 다운로드 버튼 추가 -->
+        <button id="downloadCsvBtn">CSV 다운로드</button>
     </div>
 
     <script type="module">
@@ -89,7 +98,8 @@
 
         document.getElementById('checkPasswordBtn').addEventListener('click', checkPassword);
         document.getElementById('addMemberBtn').addEventListener('click', addMember);
-        document.getElementById('downloadCsvBtn').addEventListener('click', downloadCsv); // CSV 다운로드 버튼 이벤트 리스너 추가
+        document.getElementById('downloadCsvBtn').addEventListener('click', downloadCsv);
+        document.getElementById('sortBtn').addEventListener('click', sortMembers); // 정렬 버튼 이벤트 리스너 추가
 
         function checkPassword() {
             const inputPassword = document.getElementById('adminPassword').value;
@@ -102,10 +112,12 @@
             }
         }
 
+        let membersArray = []; // 회원 정보를 저장할 배열
+
         async function loadMembers() {
             const usersSnapshot = await getDocs(collection(db, "users"));
             const tableBody = document.getElementById('memberTableBody');
-            const membersArray = []; // 회원 정보를 저장할 배열
+            membersArray = []; // 배열 초기화
 
             usersSnapshot.forEach(doc => {
                 const data = doc.data();
@@ -117,17 +129,20 @@
                 });
             });
 
-            // 이름순으로 정렬
-            membersArray.sort((a, b) => a.name.localeCompare(b.name));
+            // 기본적으로 회원 아이디순으로 정렬
+            membersArray.sort((a, b) => a.id.localeCompare(b.id));
+            updateTable(); // 테이블 업데이트
+        }
 
-            // 테이블에 추가
+        function updateTable() {
+            const tableBody = document.getElementById('memberTableBody');
             tableBody.innerHTML = ""; // 기존 내용 초기화
             membersArray.forEach(member => {
                 const newRow = tableBody.insertRow();
                 newRow.innerHTML = `
                     <td class="memberId" data-user-id="${member.id}">${member.id}</td>
                     <td>${member.name}</td>
-                    <td>${member.points}</td> <!-- 포맷팅된 포인트 출력 -->
+                    <td>${member.points}</td>
                     <td><input type="number" min="0" value="0" /></td>
                     <td><button class="earnPointsBtn" data-user-id="${member.id}">적립</button></td>
                 `;
@@ -150,14 +165,26 @@
                     const pointsInput = this.closest('tr').querySelector('input[type="number"]');
                     const pointsToAdd = parseInt(pointsInput.value);
 
-                    if (pointsToAdd > 0) {
+                    if (pointsToAdd !== 0) { // 0이 아닐 때만 처리
                         // 포인트 적립 후 points.html로 이동
-                        window.location.href = `points.html?userId=${userId}&points=${pointsToAdd}&type=적립`;
-                    } else {
+            window.location.href = `points.html?userId=${userId}&points=${pointsToAdd}&type=${pointsToAdd > 0 ? '적립' : '수정'}`;
+        } else {
                         alert('적립할 포인트를 입력하세요.');
                     }
                 });
             });
+        }
+
+        function sortMembers() {
+            const sortValue = document.getElementById('sortSelect').value;
+            if (sortValue === 'id') {
+                membersArray.sort((a, b) => a.id.localeCompare(b.id));
+            } else if (sortValue === 'name') {
+                membersArray.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortValue === 'points') {
+                membersArray.sort((a, b) => parseInt(b.points.replace(/,/g, '')) - parseInt(a.points.replace(/,/g, '')));
+            }
+            updateTable(); // 정렬 후 테이블 업데이트
         }
 
         async function addMember() {
@@ -174,38 +201,39 @@
             document.getElementById('newName').value = '';
         }
 
-function downloadCsv() {
-    const tableBody = document.getElementById('memberTableBody');
-    const rows = Array.from(tableBody.querySelectorAll('tr'));
-    const csvContent = "회원 아이디,이름,누적 포인트\n" + // 헤더 추가
-        rows.map(row => {
-            const cells = Array.from(row.children);
-            const memberId = cells[0].innerText; // 회원 아이디
-            const name = cells[1].innerText; // 이름
-            const totalPoints = cells[2].innerText.replace(/,/g, ''); // 누적 포인트 (쉼표 제거)
-            return `${memberId},${name},${totalPoints}`; // 쉼표로 나누기
-        }).join("\n");
+        function downloadCsv() {
+            const tableBody = document.getElementById('memberTableBody');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            const csvContent = "회원 아이디,이름,누적 포인트\n" + 
+                rows.map(row => {
+                    const cells = Array.from(row.children);
+                    const memberId = cells[0].innerText; // 회원 아이디
+                    const name = cells[1].innerText; // 이름
+                    const totalPoints = cells[2].innerText.replace(/,/g, ''); // 누적 포인트 (쉼표 제거)
+                    return `${memberId},${name},${totalPoints}`; // 쉼표로 나누기
+                }).join("\n");
 
-    // 서울 현재 시각 구하기
-    const now = new Date();
-    const options = { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-    const formatter = new Intl.DateTimeFormat('ko-KR', options);
-    const formattedDate = formatter.format(now)
-        .replace(/\//g, '-') // 슬래시를 하이픈으로 변환
-        .replace(/ /g, '_') // 공백을 언더바로 변환
-        .replace(/:/g, '-'); // 콜론을 하이픈으로 변환
+            // 서울 현재 시각 구하기
+            const now = new Date();
+            const options = { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const formatter = new Intl.DateTimeFormat('ko-KR', options);
+            const formattedDate = formatter.format(now)
+                .replace(/\//g, '-') // 슬래시를 하이픈으로 변환
+                .replace(/ /g, '_') // 공백을 언더바로 변환
+                .replace(/:/g, '-'); // 콜론을 하이픈으로 변환
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `${formattedDate}.csv`); // 파일명 변경
-    document.body.appendChild(link); // Required for FF
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `${formattedDate}.csv`); // 파일명 변경
+            document.body.appendChild(link); // Required for FF
 
-    link.click(); // Download
-    document.body.removeChild(link); // Clean up
-}
+            link.click(); // Download
+            document.body.removeChild(link); // Clean up
+        }
     </script>
 
 </body>
 </html>
+
