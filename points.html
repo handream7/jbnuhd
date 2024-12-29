@@ -199,7 +199,7 @@
     await addDoc(collection(db, "points"), {
         username: userId,
         points: pointsValue,
-        type: pointsValue > 0 ? "적립" : "수정", // 포인트가 양수일 경우 "적립", 음수일 경우 "수정"
+        type: "사용", // 여기에서 "사용"으로 변경
         timestamp: new Date(),
         totalPoints: newTotalPoints
     });
