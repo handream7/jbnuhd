@@ -155,15 +155,30 @@
 
             // 테이블에 추가
             pointsTableBody.innerHTML = ''; // 기존 테이블 내용 초기화
-            pointsArray.forEach(item => {
-                const newRow = pointsTableBody.insertRow();
-                newRow.innerHTML = `
-                    <td>${new Date(item.timestamp.seconds * 1000).toLocaleString()}</td>
-                    <td>${item.points.toLocaleString()}</td> <!-- 포인트 포맷팅 -->
-                    <td>${item.type}</td>
-                    <td>${item.totalPoints.toLocaleString()}</td> <!-- 포인트 포맷팅 -->
-                `;
-            });
+pointsArray.forEach(item => {
+    const newRow = pointsTableBody.insertRow();
+
+    // 날짜/시간 셀
+    const dateCell = newRow.insertCell();
+    dateCell.textContent = new Date(item.timestamp.seconds * 1000).toLocaleString();
+
+    // 포인트 내역 셀
+    const pointsCell = newRow.insertCell();
+    pointsCell.textContent = item.points.toLocaleString();
+
+    // 적립/사용 셀
+    const typeCell = newRow.insertCell();
+    typeCell.textContent = item.type;
+    if (item.type === "적립") {
+        typeCell.style.backgroundColor = "#add8e6"; // 하늘색
+    } else if (item.type === "사용") {
+        typeCell.style.backgroundColor = "#ffb6c1"; // 분홍색
+    }
+
+    // 누적 포인트 셀
+    const totalPointsCell = newRow.insertCell();
+    totalPointsCell.textContent = item.totalPoints.toLocaleString();
+});
         }
 
         async function addPoints(pointsValue, currentPoints) {
@@ -264,16 +279,31 @@ document.getElementById('confirmPointsBtn').addEventListener('click', async () =
 
             // 테이블에 추가
             pointsTableBody.innerHTML = ''; // 기존 테이블 내용 초기화
-            pointsArray.forEach(item => {
-                const newRow = pointsTableBody.insertRow();
-                newRow.innerHTML = `
-                    <td>${new Date(item.timestamp.seconds * 1000).toLocaleString()}</td>
-                    <td>${item.points.toLocaleString()}</td> <!-- 포인트 포맷팅 -->
-                    <td>${item.type}</td>
-                    <td>${item.totalPoints.toLocaleString()}</td> <!-- 포인트 포맷팅 -->
-                `;
-            });
+    pointsArray.forEach(item => {
+        const newRow = pointsTableBody.insertRow();
+
+        // 날짜/시간 셀
+        const dateCell = newRow.insertCell();
+        dateCell.textContent = new Date(item.timestamp.seconds * 1000).toLocaleString();
+
+        // 포인트 내역 셀
+        const pointsCell = newRow.insertCell();
+        pointsCell.textContent = item.points.toLocaleString();
+
+        // 적립/사용 셀
+        const typeCell = newRow.insertCell();
+        typeCell.textContent = item.type;
+        if (item.type === "적립") {
+            typeCell.style.backgroundColor = "#add8e6"; // 하늘색
+        } else if (item.type === "사용") {
+            typeCell.style.backgroundColor = "#ffb6c1"; // 분홍색
         }
+
+        // 누적 포인트 셀
+        const totalPointsCell = newRow.insertCell();
+        totalPointsCell.textContent = item.totalPoints.toLocaleString();
+    });
+}
 
         // 연도와 월 옵션 생성 (2024년 12월부터 시작)
         function populateMonths() {

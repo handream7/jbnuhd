@@ -41,6 +41,9 @@
     <div id="authSection">
         <label for="adminPassword">비밀번호:</label><br>
         <input type="password" id="adminPassword" required><br>
+        <label>
+            <input type="checkbox" id="rememberMe"> 로그인 유지하기
+        </label><br>
         <button id="checkPasswordBtn">확인</button>
     </div>
 
@@ -77,6 +80,9 @@
         <input type="text" id="newName" required><br>
         <button id="addMemberBtn">추가</button>
         <button id="downloadCsvBtn">CSV 다운로드</button>
+
+        <h3>관리자 모드 로그아웃</h3>
+        <button id="logoutBtn">확인</button> <!-- 로그아웃 버튼 -->
     </div>
 
     <script type="module">
@@ -100,10 +106,29 @@
         document.getElementById('addMemberBtn').addEventListener('click', addMember);
         document.getElementById('downloadCsvBtn').addEventListener('click', downloadCsv);
         document.getElementById('sortBtn').addEventListener('click', sortMembers); // 정렬 버튼 이벤트 리스너 추가
+        document.getElementById('logoutBtn').addEventListener('click', logout); // 로그아웃 버튼 이벤트 리스너 추가
+
+        // 페이지 로드 시 로컬 스토리지에서 비밀번호 확인
+        window.onload = function() {
+            const savedPassword = localStorage.getItem('adminPassword');
+            if (savedPassword === correctPassword) {
+                document.getElementById('authSection').style.display = 'none';
+                document.getElementById('tableSection').style.display = 'block';
+                loadMembers(); // 회원 데이터 로드
+            }
+        };
 
         function checkPassword() {
             const inputPassword = document.getElementById('adminPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+
             if (inputPassword === correctPassword) {
+                if (rememberMe) {
+                    localStorage.setItem('adminPassword', correctPassword); // 비밀번호 저장
+                } else {
+                    localStorage.removeItem('adminPassword'); // 비밀번호 삭제
+                }
+
                 document.getElementById('authSection').style.display = 'none';
                 document.getElementById('tableSection').style.display = 'block';
                 loadMembers(); // 회원 데이터 로드
@@ -167,8 +192,8 @@
 
                     if (pointsToAdd !== 0) { // 0이 아닐 때만 처리
                         // 포인트 적립 후 points.html로 이동
-            window.location.href = `points.html?userId=${userId}&points=${pointsToAdd}&type=${pointsToAdd > 0 ? '적립' : '수정'}`;
-        } else {
+                        window.location.href = `points.html?userId=${userId}&points=${pointsToAdd}&type=${pointsToAdd > 0 ? '적립' : '수정'}`;
+                    } else {
                         alert('적립할 포인트를 입력하세요.');
                     }
                 });
@@ -191,14 +216,18 @@
             const username = document.getElementById('newUsername').value;
             const name = document.getElementById('newName').value;
 
-            await setDoc(doc(db, "users", username), {
-                name: name,
-                points: 0,
-                password: "aa" // 기본 비밀번호 설정
-            });
-            loadMembers(); // 회원 데이터 새로 고침
-            document.getElementById('newUsername').value = '';
-            document.getElementById('newName').value = '';
+            if (username && name) {
+                await setDoc(doc(db, "users", username), {
+                    name: name,
+                    points: 0,
+                    password: "aa" // 기본 비밀번호 설정
+                });
+                loadMembers(); // 회원 데이터 새로 고침
+                document.getElementById('newUsername').value = '';
+                document.getElementById('newName').value = '';
+            } else {
+                alert('회원 아이디와 이름을 입력하세요.');
+            }
         }
 
         function downloadCsv() {
@@ -232,8 +261,14 @@
             link.click(); // Download
             document.body.removeChild(link); // Clean up
         }
+
+        function logout() {
+            // 로컬 스토리지에서 비밀번호 삭제
+            localStorage.removeItem('adminPassword');
+            // index2.html로 이동
+            window.location.href = 'index2.html';
+        }
     </script>
 
 </body>
 </html>
-
