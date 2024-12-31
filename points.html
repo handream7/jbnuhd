@@ -71,13 +71,15 @@
 
     <h3>포인트 내역 월별보기</h3>
     <label for="monthSelect">연월 선택:</label>
-    <select id="monthSelect">
+<select id="monthSelect">
+    <option value="">전체보기</option> <!-- 전체보기 옵션 추가 -->
         <!-- 연월 옵션이 여기에 추가됩니다. -->
     </select>
     <br>
     <button id="filterPointsBtn">확인</button> <!-- 버튼을 드롭다운 아래로 이동 -->
-
+<br>
     <h2>포인트 내역</h2>
+    <button id="goToHomeBtn" style="padding: 10px 15px; margin: 10px 5px; background-color: #d3d3d3; color: black; border: none; cursor: pointer; font-size: 16px; width: 220px;">초기화면으로 가기</button><!-- 초기화면 버튼 추가 -->
     <table>
         <thead>
             <tr>
@@ -92,7 +94,7 @@
         </tbody>
     </table>
 
-    <button id="goToHomeBtn">초기화면으로 가기</button> <!-- 초기화면 버튼 추가 -->
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
@@ -261,38 +263,54 @@ document.getElementById('confirmPointsBtn').addEventListener('click', async () =
         document.getElementById('filterPointsBtn').addEventListener('click', loadFilteredPoints);
 
         // 선택한 월의 포인트 내역을 로드하는 함수
-        async function loadFilteredPoints() {
-            const selectedMonth = monthSelect.value;
-            const querySnapshot = await getDocs(collection(db, "points"));
-            const pointsArray = []; // 포인트 내역을 저장할 배열
+async function loadFilteredPoints() {
+    const selectedMonth = monthSelect.value; // 선택된 월 (YYYY-MM 형식)
+    const querySnapshot = await getDocs(collection(db, "points"));
+    const pointsArray = []; // 포인트 내역을 저장할 배열
 
-            querySnapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.username === userId) { // 해당 사용자 ID로 필터링
-                    const date = new Date(data.timestamp.seconds * 1000);
-                    const yearMonth = date.toISOString().slice(0, 7); // YYYY-MM 형식
-                    if (yearMonth === selectedMonth) {
-                        pointsArray.push({
-                            timestamp: data.timestamp,
-                            points: data.points,
-                            type: data.type,
-                            totalPoints: data.totalPoints
-                        });
-                    }
-                }
-            });
+    querySnapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.username === userId) { // 해당 사용자 ID로 필터링
+            const dateString = data.timestamp; // Firestore의 timestamp 객체
+            const date = new Date(dateString.seconds * 1000); // 타임스탬프를 Date 객체로 변환
+            
+            const year = date.getFullYear(); // 연도
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // 월 (0부터 시작하므로 1 더함)
+            const day = String(date.getDate()).padStart(2, '0'); // 일
+            const hours = String(date.getHours()).padStart(2, '0'); // 시
+            const minutes = String(date.getMinutes()).padStart(2, '0'); // 분
+            const seconds = String(date.getSeconds()).padStart(2, '0'); // 초
 
-            // 최신 항목이 위로 오도록 정렬
-            pointsArray.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+            // 전체보기 선택 시
+            if (selectedMonth === "") {
+                pointsArray.push({
+                    timestamp: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`, // 연도-월-일 시:분:초 형식
+                    points: data.points,
+                    type: data.type,
+                    totalPoints: data.totalPoints
+                });
+            } else if (`${year}-${month}` === selectedMonth) {
+                pointsArray.push({
+                    timestamp: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`, // 연도-월-일 시:분:초 형식
+                    points: data.points,
+                    type: data.type,
+                    totalPoints: data.totalPoints
+                });
+            }
+        }
+    });
 
-            // 테이블에 추가
-            pointsTableBody.innerHTML = ''; // 기존 테이블 내용 초기화
+    // 최신 항목이 위로 오도록 정렬
+    pointsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    // 테이블에 추가
+    pointsTableBody.innerHTML = ''; // 기존 테이블 내용 초기화
     pointsArray.forEach(item => {
         const newRow = pointsTableBody.insertRow();
 
         // 날짜/시간 셀
         const dateCell = newRow.insertCell();
-        dateCell.textContent = new Date(item.timestamp.seconds * 1000).toLocaleString();
+        dateCell.textContent = item.timestamp; // 연도-월-일 시:분:초 형식으로 표시
 
         // 포인트 내역 셀
         const pointsCell = newRow.insertCell();
@@ -314,25 +332,36 @@ document.getElementById('confirmPointsBtn').addEventListener('click', async () =
 }
 
         // 연도와 월 옵션 생성 (2024년 12월부터 시작)
-        function populateMonths() {
-            const startYear = 2024;
-            const startMonth = 12;
-            const currentYear = new Date().getFullYear();
-            const currentMonth = new Date().getMonth() + 1; // 0부터 시작하므로 1 더하기
+function populateMonths() {
+    const startYear = 2024;
+    const startMonth = 12;
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // 0부터 시작하므로 1 더하기
 
-            for (let year = startYear; year <= currentYear; year++) {
-                const monthLimit = (year === currentYear) ? currentMonth : 12;
-                for (let month = (year === startYear ? startMonth : 1); month <= monthLimit; month++) {
-                    const monthOption = document.createElement('option');
-                    monthOption.value = `${year}-${month < 10 ? '0' + month : month}`; // YYYY-MM 형식
-                    monthOption.textContent = `${year}년 ${month}월`;
-                    monthSelect.appendChild(monthOption);
-                }
-            }
+    const monthsArray = []; // 연월을 저장할 배열
 
-            // 드롭다운의 기본값을 현재 연월로 설정
-            monthSelect.value = `${currentYear}-${currentMonth < 10 ? '0' + currentMonth : currentMonth}`;
+    for (let year = startYear; year <= currentYear; year++) {
+        const monthLimit = (year === currentYear) ? currentMonth : 12;
+        for (let month = (year === startYear ? startMonth : 1); month <= monthLimit; month++) {
+            const monthOption = `${year}-${month < 10 ? '0' + month : month}`; // YYYY-MM 형식
+            monthsArray.push(monthOption);
         }
+    }
+
+    // 최신 연월이 위로 오도록 정렬
+    monthsArray.reverse();
+
+    // 드롭다운에 옵션 추가
+    monthsArray.forEach(monthOption => {
+        const monthSelectOption = document.createElement('option');
+        monthSelectOption.value = monthOption;
+        monthSelectOption.textContent = `${monthOption.slice(0, 4)}년 ${monthOption.slice(5)}월`;
+        monthSelect.appendChild(monthSelectOption);
+    });
+
+    // 드롭다운의 기본값을 전체보기로 설정
+    monthSelect.value = "";
+}
 
         // 초기화면 버튼 클릭 이벤트 추가
         document.getElementById('goToHomeBtn').addEventListener('click', () => {
