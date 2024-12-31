@@ -183,21 +183,25 @@
             });
 
             // 적립 버튼에 이벤트 리스너 추가
-            const earnButtons = document.querySelectorAll('.earnPointsBtn');
-            earnButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const userId = this.getAttribute('data-user-id');
-                    const pointsInput = this.closest('tr').querySelector('input[type="number"]');
-                    const pointsToAdd = parseInt(pointsInput.value);
+const earnButtons = document.querySelectorAll('.earnPointsBtn');
+earnButtons.forEach(button => {
+    button.addEventListener('click', async function() {
+        const userId = this.getAttribute('data-user-id');
+        const pointsInput = this.closest('tr').querySelector('input[type="number"]');
+        const pointsToAdd = parseInt(pointsInput.value);
 
-                    if (pointsToAdd !== 0) { // 0이 아닐 때만 처리
-                        // 포인트 적립 후 points.html로 이동
-                        window.location.href = `points.html?userId=${userId}&points=${pointsToAdd}&type=${pointsToAdd > 0 ? '적립' : '수정'}`;
-                    } else {
-                        alert('적립할 포인트를 입력하세요.');
-                    }
-                });
-            });
+        if (!isNaN(pointsToAdd)) {
+            if (pointsToAdd !== 0) {
+                // 포인트 적립 또는 수정
+                const type = pointsToAdd > 0 ? '적립' : '수정';
+                // points.html로 이동
+                window.location.href = `points.html?userId=${userId}&points=${pointsToAdd}&type=${type}`; // 포인트를 그대로 넘김
+            } else {
+                alert('적립할 포인트를 입력하세요.');
+            }
+        }
+    });
+});
         }
 
         function sortMembers() {

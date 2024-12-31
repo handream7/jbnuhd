@@ -125,10 +125,11 @@
                 loadPoints(); // 포인트 내역 로드
 
                 // URL에서 포인트를 가져온 경우
-                if (pointsToAdd) {
-                    await addPoints(pointsToAdd, data.points || 0);
-                }
-            } else {
+        if (pointsToAdd) {
+            const type = urlParams.get('type');
+            await addPoints(pointsToAdd, data.points || 0, type);
+        }
+    } else {
                 alert('해당 사용자가 존재하지 않습니다.');
                 window.location.href = 'index2.html'; // 로그인 페이지로 리다이렉트
             }
@@ -181,14 +182,19 @@ pointsArray.forEach(item => {
 });
         }
 
-        async function addPoints(pointsValue, currentPoints) {
-            const newTotalPoints = currentPoints + pointsValue; // 누적 포인트 계산
+        async function addPoints(pointsValue, currentPoints, type) {
+    let newTotalPoints;
+    if (type === '적립') {
+        newTotalPoints = currentPoints + pointsValue; // 누적 포인트 증가
+    } else { // 수정
+        newTotalPoints = currentPoints + pointsValue; // 음수 포인트를 더함으로써 차감
+    }
 
             // 포인트 내역 추가
             await addDoc(collection(db, "points"), {
                 username: userId,
                 points: pointsValue,
-                type: "적립", // 적립으로 설정
+                type: type, // 적립으로 설정
                 timestamp: new Date(),
                 totalPoints: newTotalPoints
             });
