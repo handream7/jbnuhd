@@ -125,10 +125,12 @@
                 loadPoints(); // 포인트 내역 로드
 
                 // URL에서 포인트를 가져온 경우
-        if (pointsToAdd) {
-            const type = urlParams.get('type');
-            await addPoints(pointsToAdd, data.points || 0, type);
-        }
+            const pointsToAdd = parseInt(urlParams.get('points')); // 포인트 가져오기
+            const type = urlParams.get('type'); // 타입 가져오기
+            if (pointsToAdd && type) {
+                await addPoints(pointsToAdd, data.points || 0, type);
+                alert(`${Math.abs(pointsToAdd).toLocaleString()} 포인트 ${type}되었습니다.`); // 알림 추가
+            }
     } else {
                 alert('해당 사용자가 존재하지 않습니다.');
                 window.location.href = 'index2.html'; // 로그인 페이지로 리다이렉트
