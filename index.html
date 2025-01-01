@@ -17,6 +17,9 @@
             text-align: center;
             padding: 15px 0;
             font-size: 2em;
+            width: 100%; /* 전체 너비로 설정 */
+            margin: 0; /* 여백 초기화 */
+            box-sizing: border-box; /* 패딩을 포함하여 너비 계산 */
         }
         nav {
             display: flex;
@@ -41,12 +44,13 @@
         section {
             display: none;
             padding: 20px;
-            max-width: 800px;
+            width: calc(100% - 40px);
             margin: 20px auto; /* 섹션 여백 추가 */
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
+    margin-bottom: 60px; /* 푸터의 높이에 맞춰 여백 추가 */
+}
         section.active {
             display: block;
         }
@@ -55,10 +59,13 @@
             color: white;
             text-align: center;
             padding: 10px 0;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
+    position: fixed; /* 고정 위치 설정 */
+    bottom: 0; /* 화면 하단에 고정 */
+    left: 0; /* 왼쪽 정렬 */
+    width: 100%; /* 전체 너비로 설정 */
+    margin: 0; /* 기본 여백 초기화 */
+    box-sizing: border-box; /* 패딩을 포함하여 너비 계산 */
+}
     </style>
 </head>
 <body>
@@ -212,7 +219,7 @@
     </section>
 
 
-<section id="pointsystem" class="active">
+<section id="pointsystem">
 <iframe src="index2.html" width="100%" style="height: 150vh; border: none;"></iframe>
 
 </section>
