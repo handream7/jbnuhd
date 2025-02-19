@@ -124,7 +124,7 @@
             if (userDoc.exists()) {
                 const data = userDoc.data();
                 userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${(data.points || 0).toLocaleString()}`; // 포인트 포맷팅
-                loadPoints(); // 포인트 내역 로드
+        loadFilteredPoints(); // 필터링된 포인트 내역 로드
 
                 // URL에서 포인트를 가져온 경우
             const pointsToAdd = parseInt(urlParams.get('points')); // 포인트 가져오기
@@ -359,8 +359,8 @@ function populateMonths() {
         monthSelect.appendChild(monthSelectOption);
     });
 
-    // 드롭다운의 기본값을 전체보기로 설정
-    monthSelect.value = "";
+    // 드롭다운의 기본값을 현재 월로 설정
+    monthSelect.value = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
 }
 
         // 초기화면 버튼 클릭 이벤트 추가
