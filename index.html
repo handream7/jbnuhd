@@ -70,6 +70,40 @@
     margin: 0; /* 기본 여백 초기화 */
     box-sizing: border-box; /* 패딩을 포함하여 너비 계산 */
 }
+
+        .prize-calculator {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .prize-calculator h1 {
+            margin-bottom: 20px;
+        }
+        .prize-calculator label {
+            display: block;
+            margin: 10px 0;
+        }
+        .prize-calculator select {
+            font-size: 18px;
+            padding: 10px;
+            width: 100px;
+            margin-bottom: 20px;
+        }
+        .prize-calculator button {
+            font-size: 18px;
+            padding: 10px 20px;
+            background-color: #87CEEB;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .prize-calculator button:hover {
+            background-color: #7EC8E3;
+        }
+        .prize-calculator h2 {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -82,6 +116,7 @@
         <a href="#fees" onclick="showSection('fees')">게임비 및 정산</a>
         <a href="#pointsystem" onclick="showSection('pointsystem')">포인트 시스템</a>
         <a href="https://holdemtimer.kro.kr" target="_blank">홀덤타이머</a>
+        <a href="#prize" onclick="showSection('prize')">prize계산기</a>
         <a href="#calculator" onclick="showSection('calculator')">딜러 계산기</a>
         <a href="https://www.icmizer.com/icmcalculator/" target="_blank">ICM 계산기</a>
     </nav>
@@ -192,7 +227,102 @@
 
 </section>
 
+<section id="prize">
+    <h1>Prize 계산기</h1>
 
+    <label for="buyInCount">바이인 인원수:</label>
+    <input type="number" id="buyInCount" min="1" max="33" value="1">
+    <br>
+
+    <label for="rebuyCount">리바이 인원수:</label>
+    <input type="number" id="rebuyCount" min="1" max="33" value="1">
+    <br>
+
+    <button onclick="calculatePrize()">확인</button>
+    <br><br>
+
+    <h2 id="result"></h2>
+
+    <style>
+        /* 섹션 스타일 */
+        #prize {
+            padding: 20px; /* 여백 추가 */
+            background-color: #f9f9f9; /* 배경색 */
+            border-radius: 8px; /* 모서리 둥글게 */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
+        }
+
+        h1 {
+            margin-bottom: 20px; /* 제목 아래 여백 */
+        }
+        label {
+            display: block; /* 레이블을 블록으로 표시 */
+            margin: 10px 0; /* 각 요소 간격 조정 */
+        }
+        input[type="number"] {
+            font-size: 18px; /* 입력 필드 글꼴 크기 */
+            padding: 10px; /* 입력 필드 패딩 */
+            width: 100px; /* 입력 필드 너비 */
+            margin-bottom: 20px; /* 입력 필드 아래 여백 */
+        }
+        button {
+            font-size: 18px; /* 버튼 글꼴 크기 */
+            padding: 10px 20px; /* 버튼 패딩 */
+            background-color: #87CEEB; /* 하늘색 배경 */
+            color: white; /* 버튼 글자색 */
+            border: none; /* 버튼 테두리 없음 */
+            cursor: pointer; /* 마우스 포인터 변경 */
+            border-radius: 5px; /* 버튼 모서리 둥글게 */
+        }
+        button:hover {
+            background-color: #7EC8E3; /* 버튼 호버 색상 */
+        }
+        h2 {
+            margin-top: 20px; /* 결과 제목 위 여백 */
+        }
+    </style>
+
+    <script>
+        function calculatePrize() {
+            const buyInCount = parseInt(document.getElementById('buyInCount').value);
+            const rebuyCount = parseInt(document.getElementById('rebuyCount').value);
+            const totalParticipants = buyInCount + rebuyCount;
+            let prizes = [];
+            let prizeDistribution;
+
+            // 바이인 수에 따라 상금 분배 결정
+            if (buyInCount <= 7) {
+                prizeDistribution = [0.65, 0.35]; // 2등까지
+            } else if (buyInCount <= 11) {
+                prizeDistribution = [0.60, 0.30, 0.10]; // 3등까지
+            } else if (buyInCount <= 17) {
+                prizeDistribution = [0.50, 0.25, 0.15, 0.10]; // 4등까지
+            } else if (buyInCount <= 33) {
+                prizeDistribution = [0.45, 0.25, 0.15, 0.10, 0.05]; // 5등까지
+            } else {
+                alert("바이인 수는 최대 33명까지 가능합니다.");
+                return;
+            }
+
+            prizes = calculatePrizes(totalParticipants, prizeDistribution);
+            const totalPrize = Math.round(totalParticipants * 250);
+
+            // 결과 표시
+            document.getElementById('result').innerHTML = 
+                `전체 상금: ${addCommas(totalPrize)} 포인트<br>` +
+                prizes.map((prize, index) => `${index + 1}등: ${prize}`).join('<br>');
+        }
+
+        function calculatePrizes(totalParticipants, percentages) {
+            const totalPrize = Math.round(totalParticipants * 250);
+            return percentages.map(p => addCommas(Math.round(totalPrize * p)) + ' 포인트');
+        }
+
+        function addCommas(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+    </script>
+</section>
 
     <section id="calculator">
         <h2>딜러 계산기</h2>
