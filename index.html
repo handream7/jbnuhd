@@ -231,11 +231,11 @@
     <h1>Prize 계산기</h1>
 
     <label for="buyInCount">바이인 인원수:</label>
-    <input type="number" id="buyInCount" min="1" max="33" value="1">
+    <input type="number" id="buyInCount" min="1" max="40" value="1">
     <br>
 
     <label for="rebuyCount">리바이 인원수:</label>
-    <input type="number" id="rebuyCount" min="1" max="33" value="1">
+    <input type="number" id="rebuyCount" min="1" max="40" value="1">
     <br>
 
     <button onclick="calculatePrize()">확인</button>
@@ -297,10 +297,10 @@
                 prizeDistribution = [0.60, 0.30, 0.10]; // 3등까지
             } else if (buyInCount <= 17) {
                 prizeDistribution = [0.50, 0.25, 0.15, 0.10]; // 4등까지
-            } else if (buyInCount <= 33) {
+            } else if (buyInCount <= 40) {
                 prizeDistribution = [0.45, 0.25, 0.15, 0.10, 0.05]; // 5등까지
             } else {
-                alert("바이인 수는 최대 33명까지 가능합니다.");
+                alert("바이인 수는 최대 40명까지 가능합니다.");
                 return;
             }
 
