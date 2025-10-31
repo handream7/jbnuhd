@@ -67,15 +67,11 @@
     <h3>포인트 내역 월별보기</h3>
     <label for="monthSelect">연월 선택:</label>
 <select id="monthSelect">
-    <option value="">전체보기</option> <!-- 전체보기 옵션 추가 -->
-        <!-- 연월 옵션이 여기에 추가됩니다. -->
-    </select>
+    <option value="">전체보기</option> </select>
     <br>
-    <button id="filterPointsBtn">확인</button> <!-- 버튼을 드롭다운 아래로 이동 -->
-<br>
+    <button id="filterPointsBtn">확인</button> <br>
     <h2>포인트 내역</h2>
-    <button id="goToHomeBtn" style="padding: 10px 15px; margin: 10px 5px; background-color: #d3d3d3; color: black; border: none; cursor: pointer; font-size: 16px; width: 220px;">초기화면으로 가기</button><!-- 초기화면 버튼 추가 -->
-    <table>
+    <button id="goToHomeBtn" style="padding: 10px 15px; margin: 10px 5px; background-color: #d3d3d3; color: black; border: none; cursor: pointer; font-size: 16px; width: 220px;">초기화면으로 가기</button><table>
         <thead>
             <tr>
                 <th>날짜/시간</th>
@@ -85,14 +81,14 @@
             </tr>
         </thead>
         <tbody id="pointsTableBody">
-            <!-- 포인트 내역이 여기에 추가됩니다. -->
-        </tbody>
+            </tbody>
     </table>
 
 
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+        // 'doc', 'setDoc', 'updateDoc' 추가
         import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -114,21 +110,38 @@
         const pointsTableBody = document.getElementById('pointsTableBody');
         const monthSelect = document.getElementById('monthSelect');
 
+        // --- (수정) 헬퍼 함수 추가 ---
+        // YYYYMMDDHHMMSSsss (밀리초까지) 형식의 문자열을 반환하는 함수
+        function getFormattedTimestamp() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const milliseconds = String(now.getMilliseconds()).padStart(3, '0'); // 3자리로 패딩
+
+            return `${year}${month}${day}${hours}${minutes}${seconds}${milliseconds}`;
+        }
+        // --- (수정) 헬퍼 함수 끝 ---
+
+
         async function loadUserInfo() {
             const userDoc = await getDoc(doc(db, "users", userId));
             if (userDoc.exists()) {
                 const data = userDoc.data();
                 userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${(data.points || 0).toLocaleString()}`; // 포인트 포맷팅
-        loadFilteredPoints(); // 필터링된 포인트 내역 로드
+                loadFilteredPoints(); // 필터링된 포인트 내역 로드
 
                 // URL에서 포인트를 가져온 경우
-            const pointsToAdd = parseInt(urlParams.get('points')); // 포인트 가져오기
-            const type = urlParams.get('type'); // 타입 가져오기
-            if (pointsToAdd && type) {
-                await addPoints(pointsToAdd, data.points || 0, type);
-                alert(`${Math.abs(pointsToAdd).toLocaleString()} 포인트 ${type}되었습니다.`); // 알림 추가
-            }
-    } else {
+                const pointsToAdd = parseInt(urlParams.get('points')); // 포인트 가져오기
+                const type = urlParams.get('type'); // 타입 가져오기
+                if (pointsToAdd && type) {
+                    await addPoints(pointsToAdd, data.points || 0, type);
+                    alert(`${Math.abs(pointsToAdd).toLocaleString()} 포인트 ${type}되었습니다.`); // 알림 추가
+                }
+            } else {
                 alert('해당 사용자가 존재하지 않습니다.');
                 window.location.href = 'index2.html'; // 로그인 페이지로 리다이렉트
             }
@@ -155,208 +168,227 @@
 
             // 테이블에 추가
             pointsTableBody.innerHTML = ''; // 기존 테이블 내용 초기화
-pointsArray.forEach(item => {
-    const newRow = pointsTableBody.insertRow();
+            pointsArray.forEach(item => {
+                const newRow = pointsTableBody.insertRow();
 
-    // 날짜/시간 셀
-    const dateCell = newRow.insertCell();
-    dateCell.textContent = new Date(item.timestamp.seconds * 1000).toLocaleString();
+                // 날짜/시간 셀
+                const dateCell = newRow.insertCell();
+                dateCell.textContent = new Date(item.timestamp.seconds * 1000).toLocaleString();
 
-    // 포인트 내역 셀
-    const pointsCell = newRow.insertCell();
-    pointsCell.textContent = item.points.toLocaleString();
+                // 포인트 내역 셀
+                const pointsCell = newRow.insertCell();
+                pointsCell.textContent = item.points.toLocaleString();
 
-    // 적립/사용 셀
-    const typeCell = newRow.insertCell();
-    typeCell.textContent = item.type;
-    if (item.type === "적립") {
-        typeCell.style.backgroundColor = "#add8e6"; // 하늘색
-    } else if (item.type === "사용") {
-        typeCell.style.backgroundColor = "#ffb6c1"; // 분홍색
-    }
+                // 적립/사용 셀
+                const typeCell = newRow.insertCell();
+                typeCell.textContent = item.type;
+                if (item.type === "적립") {
+                    typeCell.style.backgroundColor = "#add8e6"; // 하늘색
+                } else if (item.type === "사용") {
+                    typeCell.style.backgroundColor = "#ffb6c1"; // 분홍색
+                }
 
-    // 누적 포인트 셀
-    const totalPointsCell = newRow.insertCell();
-    totalPointsCell.textContent = item.totalPoints.toLocaleString();
-});
+                // 누적 포인트 셀
+                const totalPointsCell = newRow.insertCell();
+                totalPointsCell.textContent = item.totalPoints.toLocaleString();
+            });
         }
 
+        // --- (수정) addPoints 함수 ---
         async function addPoints(pointsValue, currentPoints, type) {
-    let newTotalPoints;
-    if (type === '적립') {
-        newTotalPoints = currentPoints + pointsValue; // 누적 포인트 증가
-    } else { // 수정
-        newTotalPoints = currentPoints + pointsValue; // 음수 포인트를 더함으로써 차감
-    }
+            let newTotalPoints;
+            if (type === '적립') {
+                newTotalPoints = currentPoints + pointsValue; // 누적 포인트 증가
+            } else { // 수정
+                newTotalPoints = currentPoints + pointsValue; // 음수 포인트를 더함으로써 차감
+            }
 
-            // 포인트 내역 추가
-            await addDoc(collection(db, "points"), {
+            // 1. 커스텀 ID 생성 (예: testUser_20251031143015123)
+            const now = new Date(); // timestamp 필드에 저장할 실제 Date 객체
+            const customDocId = `${userId}_${getFormattedTimestamp()}`; 
+            
+            // 2. 'points' 컬렉션에 커스텀 ID로 문서 참조 생성
+            const docRef = doc(db, "points", customDocId);
+
+            // 3. addDoc 대신 setDoc을 사용하여 데이터 저장
+            await setDoc(docRef, {
                 username: userId,
                 points: pointsValue,
-                type: type, // 적립으로 설정
-                timestamp: new Date(),
+                type: type, 
+                timestamp: now, // 정렬 및 필터링을 위해 Date 객체 저장
                 totalPoints: newTotalPoints
             });
 
-            // 누적 포인트 업데이트 (이름을 변경하지 않도록 수정)
-            await updateDoc(doc(db, "users", userId), { // setDoc 대신 updateDoc 사용
+            // 누적 포인트 업데이트
+            await updateDoc(doc(db, "users", userId), {
                 points: newTotalPoints,
-            }); // merge: true를 사용하지 않음, updateDoc은 기본적으로 병합
+            }); 
 
             // 정보 업데이트
-            userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${newTotalPoints.toLocaleString()}`; // 포인트 포맷팅
+            userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${newTotalPoints.toLocaleString()}`; 
         }
+        // --- (수정) addPoints 함수 끝 ---
 
+        // --- (수정) usePoints 함수 ---
         async function usePoints(pointsValue, currentPoints) {
             const newTotalPoints = currentPoints - pointsValue; // 누적 포인트 차감
 
             if (newTotalPoints < 0) {
                 alert('포인트가 부족합니다.');
-        return false; // 포인트 부족 시 false 반환
-    }
+                return false; // 포인트 부족 시 false 반환
+            }
 
-            // 포인트 내역 추가
-    await addDoc(collection(db, "points"), {
-        username: userId,
-        points: pointsValue,
-        type: "사용", // 여기에서 "사용"으로 변경
-        timestamp: new Date(),
-        totalPoints: newTotalPoints
-    });
+            // 1. 커스텀 ID 생성
+            const now = new Date(); // timestamp 필드에 저장할 실제 Date 객체
+            const customDocId = `${userId}_${getFormattedTimestamp()}`; 
 
-            // 누적 포인트 업데이트 (이름을 변경하지 않도록 수정)
-            await updateDoc(doc(db, "users", userId), { // setDoc 대신 updateDoc 사용
+            // 2. 'points' 컬렉션에 커스텀 ID로 문서 참조 생성
+            const docRef = doc(db, "points", customDocId);
+            
+            // 3. addDoc 대신 setDoc을 사용하여 데이터 저장
+            await setDoc(docRef, {
+                username: userId,
+                points: pointsValue,
+                type: "사용", 
+                timestamp: now, // 정렬 및 필터링을 위해 Date 객체 저장
+                totalPoints: newTotalPoints
+            });
+
+            // 누적 포인트 업데이트
+            await updateDoc(doc(db, "users", userId), {
                 points: newTotalPoints,
-            }); // merge: true를 사용하지 않음, updateDoc은 기본적으로 병합
+            });
 
             // 정보 업데이트
-            userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${newTotalPoints.toLocaleString()}`; // 포인트 포맷팅
+            userInfoDiv.innerText = `회원 아이디: ${userId}, 누적 포인트: ${newTotalPoints.toLocaleString()}`; 
             loadPoints(); // 포인트 내역 새로 고침
-    return true; // 포인트 사용 성공 시 true 반환
+            return true; // 포인트 사용 성공 시 true 반환
         }
+        // --- (수정) usePoints 함수 끝 ---
+
 
         // 포인트 사용 버튼 클릭 이벤트 추가
-document.getElementById('confirmPointsBtn').addEventListener('click', async () => {
-    const selectedPoints = document.querySelector('input[name="points"]:checked');
-    if (!selectedPoints) {
-        alert('포인트를 선택해주세요.');
-        return;
-    }
-    const pointsValue = parseInt(selectedPoints.value);
-    const userDoc = await getDoc(doc(db, "users", userId));
-    
-    // 포인트 사용 함수 호출
-    const result = await usePoints(pointsValue, userDoc.data().points || 0);
-    
-    // 포인트 사용 성공 시 알림 추가
-    if (result) {
-        alert(`${pointsValue.toLocaleString()} 포인트를 사용하였습니다.`);
-    }
-});
+        document.getElementById('confirmPointsBtn').addEventListener('click', async () => {
+            const selectedPoints = document.querySelector('input[name="points"]:checked');
+            if (!selectedPoints) {
+                alert('포인트를 선택해주세요.');
+                return;
+            }
+            const pointsValue = parseInt(selectedPoints.value);
+            const userDoc = await getDoc(doc(db, "users", userId));
+            
+            // 포인트 사용 함수 호출
+            const result = await usePoints(pointsValue, userDoc.data().points || 0);
+            
+            // 포인트 사용 성공 시 알림 추가
+            if (result) {
+                alert(`${pointsValue.toLocaleString()} 포인트를 사용하였습니다.`);
+            }
+        });
 
         // 내역 필터링 버튼 클릭 이벤트 추가
         document.getElementById('filterPointsBtn').addEventListener('click', loadFilteredPoints);
 
         // 선택한 월의 포인트 내역을 로드하는 함수
-async function loadFilteredPoints() {
-    const selectedMonth = monthSelect.value; // 선택된 월 (YYYY-MM 형식)
-    const querySnapshot = await getDocs(collection(db, "points"));
-    const pointsArray = []; // 포인트 내역을 저장할 배열
+        async function loadFilteredPoints() {
+            const selectedMonth = monthSelect.value; // 선택된 월 (YYYY-MM 형식)
+            const querySnapshot = await getDocs(collection(db, "points"));
+            const pointsArray = []; // 포인트 내역을 저장할 배열
 
-    querySnapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.username === userId) { // 해당 사용자 ID로 필터링
-            const dateString = data.timestamp; // Firestore의 timestamp 객체
-            const date = new Date(dateString.seconds * 1000); // 타임스탬프를 Date 객체로 변환
-            
-            const year = date.getFullYear(); // 연도
-            const month = String(date.getMonth() + 1).padStart(2, '0'); // 월 (0부터 시작하므로 1 더함)
-            const day = String(date.getDate()).padStart(2, '0'); // 일
-            const hours = String(date.getHours()).padStart(2, '0'); // 시
-            const minutes = String(date.getMinutes()).padStart(2, '0'); // 분
-            const seconds = String(date.getSeconds()).padStart(2, '0'); // 초
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.username === userId) { // 해당 사용자 ID로 필터링
+                    const dateString = data.timestamp; // Firestore의 timestamp 객체
+                    const date = new Date(dateString.seconds * 1000); // 타임스탬프를 Date 객체로 변환
+                    
+                    const year = date.getFullYear(); // 연도
+                    const month = String(date.getMonth() + 1).padStart(2, '0'); // 월 (0부터 시작하므로 1 더함)
+                    const day = String(date.getDate()).padStart(2, '0'); // 일
+                    const hours = String(date.getHours()).padStart(2, '0'); // 시
+                    const minutes = String(date.getMinutes()).padStart(2, '0'); // 분
+                    const seconds = String(date.getSeconds()).padStart(2, '0'); // 초
 
-            // 전체보기 선택 시
-            if (selectedMonth === "") {
-                pointsArray.push({
-                    timestamp: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`, // 연도-월-일 시:분:초 형식
-                    points: data.points,
-                    type: data.type,
-                    totalPoints: data.totalPoints
-                });
-            } else if (`${year}-${month}` === selectedMonth) {
-                pointsArray.push({
-                    timestamp: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`, // 연도-월-일 시:분:초 형식
-                    points: data.points,
-                    type: data.type,
-                    totalPoints: data.totalPoints
-                });
-            }
+                    // 전체보기 선택 시
+                    if (selectedMonth === "") {
+                        pointsArray.push({
+                            timestamp: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`, // 연도-월-일 시:분:초 형식
+                            points: data.points,
+                            type: data.type,
+                            totalPoints: data.totalPoints
+                        });
+                    } else if (`${year}-${month}` === selectedMonth) {
+                        pointsArray.push({
+                            timestamp: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`, // 연도-월-일 시:분:초 형식
+                            points: data.points,
+                            type: data.type,
+                            totalPoints: data.totalPoints
+                        });
+                    }
+                }
+            });
+
+            // 최신 항목이 위로 오도록 정렬
+            pointsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            // 테이블에 추가
+            pointsTableBody.innerHTML = ''; // 기존 테이블 내용 초기화
+            pointsArray.forEach(item => {
+                const newRow = pointsTableBody.insertRow();
+
+                // 날짜/시간 셀
+                const dateCell = newRow.insertCell();
+                dateCell.textContent = item.timestamp; // 연도-월-일 시:분:초 형식으로 표시
+
+                // 포인트 내역 셀
+                const pointsCell = newRow.insertCell();
+                pointsCell.textContent = item.points.toLocaleString();
+
+                // 적립/사용 셀
+                const typeCell = newRow.insertCell();
+                typeCell.textContent = item.type;
+                if (item.type === "적립") {
+                    typeCell.style.backgroundColor = "#add8e6"; // 하늘색
+                } else if (item.type === "사용") {
+                    typeCell.style.backgroundColor = "#ffb6c1"; // 분홍색
+                }
+
+                // 누적 포인트 셀
+                const totalPointsCell = newRow.insertCell();
+                totalPointsCell.textContent = item.totalPoints.toLocaleString();
+            });
         }
-    });
-
-    // 최신 항목이 위로 오도록 정렬
-    pointsArray.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    // 테이블에 추가
-    pointsTableBody.innerHTML = ''; // 기존 테이블 내용 초기화
-    pointsArray.forEach(item => {
-        const newRow = pointsTableBody.insertRow();
-
-        // 날짜/시간 셀
-        const dateCell = newRow.insertCell();
-        dateCell.textContent = item.timestamp; // 연도-월-일 시:분:초 형식으로 표시
-
-        // 포인트 내역 셀
-        const pointsCell = newRow.insertCell();
-        pointsCell.textContent = item.points.toLocaleString();
-
-        // 적립/사용 셀
-        const typeCell = newRow.insertCell();
-        typeCell.textContent = item.type;
-        if (item.type === "적립") {
-            typeCell.style.backgroundColor = "#add8e6"; // 하늘색
-        } else if (item.type === "사용") {
-            typeCell.style.backgroundColor = "#ffb6c1"; // 분홍색
-        }
-
-        // 누적 포인트 셀
-        const totalPointsCell = newRow.insertCell();
-        totalPointsCell.textContent = item.totalPoints.toLocaleString();
-    });
-}
 
         // 연도와 월 옵션 생성 (2024년 12월부터 시작)
-function populateMonths() {
-    const startYear = 2024;
-    const startMonth = 12;
-    const currentYear = new Date().getFullYear();
-    const currentMonth = new Date().getMonth() + 1; // 0부터 시작하므로 1 더하기
+        function populateMonths() {
+            const startYear = 2024;
+            const startMonth = 12;
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth() + 1; // 0부터 시작하므로 1 더하기
 
-    const monthsArray = []; // 연월을 저장할 배열
+            const monthsArray = []; // 연월을 저장할 배열
 
-    for (let year = startYear; year <= currentYear; year++) {
-        const monthLimit = (year === currentYear) ? currentMonth : 12;
-        for (let month = (year === startYear ? startMonth : 1); month <= monthLimit; month++) {
-            const monthOption = `${year}-${month < 10 ? '0' + month : month}`; // YYYY-MM 형식
-            monthsArray.push(monthOption);
+            for (let year = startYear; year <= currentYear; year++) {
+                const monthLimit = (year === currentYear) ? currentMonth : 12;
+                for (let month = (year === startYear ? startMonth : 1); month <= monthLimit; month++) {
+                    const monthOption = `${year}-${month < 10 ? '0' + month : month}`; // YYYY-MM 형식
+                    monthsArray.push(monthOption);
+                }
+            }
+
+            // 최신 연월이 위로 오도록 정렬
+            monthsArray.reverse();
+
+            // 드롭다운에 옵션 추가
+            monthsArray.forEach(monthOption => {
+                const monthSelectOption = document.createElement('option');
+                monthSelectOption.value = monthOption;
+                monthSelectOption.textContent = `${monthOption.slice(0, 4)}년 ${monthOption.slice(5)}월`;
+                monthSelect.appendChild(monthSelectOption);
+            });
+
+            // 드롭다운의 기본값을 현재 월로 설정
+            monthSelect.value = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
         }
-    }
-
-    // 최신 연월이 위로 오도록 정렬
-    monthsArray.reverse();
-
-    // 드롭다운에 옵션 추가
-    monthsArray.forEach(monthOption => {
-        const monthSelectOption = document.createElement('option');
-        monthSelectOption.value = monthOption;
-        monthSelectOption.textContent = `${monthOption.slice(0, 4)}년 ${monthOption.slice(5)}월`;
-        monthSelect.appendChild(monthSelectOption);
-    });
-
-    // 드롭다운의 기본값을 현재 월로 설정
-    monthSelect.value = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
-}
 
         // 초기화면 버튼 클릭 이벤트 추가
         document.getElementById('goToHomeBtn').addEventListener('click', () => {
@@ -370,4 +402,3 @@ function populateMonths() {
 
 </body>
 </html>
-
